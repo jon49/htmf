@@ -10,7 +10,8 @@ without JavaScript and the JS is just progressive enhancement.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
-will be parsed back into the HTML.
+will be parsed back into the HTML. When the `htmf` library makes a call to
+the back end it will add the header `HF-Request: true` to the HTTP call.
 
 Use `id` or `target` attributes in the return `HTML` to give a target
 otherwise it will replace the `body`.
