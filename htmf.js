@@ -24,14 +24,15 @@
         location.href = response.url;
         return;
       }
-      const contentType_ = response.headers.get("content-type");
-      const contentType = contentType_.indexOf("application/json") > -1 ? "json" : contentType_.indexOf("html") > -1 ? "html" : "text";
+      const contentType = response.headers.get("content-type");
       if (contentType && contentType.indexOf("application/json") !== -1) {
         let data = JSON.parse(await response.json());
         document.dispatchEvent(new CustomEvent("received-json", {bubbles: false, detail: {data, form: $form2, button: $button}}));
-      } else {
+      } else if (contentType.indexOf("html") > -1) {
         let text = await response.text();
-        htmlSwap({contentType, text, form: $form2});
+        htmlSwap({text, form: $form2});
+      } else {
+        console.error(`Unhandled content type "${contentType}"`);
       }
     } catch (ex) {
       console.error(ex);
@@ -41,8 +42,6 @@
     }
   });
   function htmlSwap(data) {
-    if (data.contentType !== "html")
-      return;
     const template = document.createElement("template");
     template.innerHTML = data.text.trim();
     for (const el of template.content.childNodes) {
