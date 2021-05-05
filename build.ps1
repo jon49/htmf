@@ -1,16 +1,16 @@
 
-$htmf = Get-Content .\htmf-source.js
+$htmf = Get-Content .\src\htmf-source.js
 $htmf | esbuild.cmd --format=iife |
-Tee-Object -FilePath htmf.js |
-esbuild.cmd --minify > htmf.min.js
+Tee-Object -FilePath .\public\htmf.js |
+esbuild.cmd --minify > .\public\htmf.min.js
 
-$extensions = Get-Content .\htmf-extensions-source.js
+$extensions = Get-Content .\src\htmf-extensions-source.js
 $extensions |
 esbuild.cmd --format=iife |
-Tee-Object -FilePath extensions.js |
-esbuild.cmd --minify > extensions.min.js
+Tee-Object -FilePath .\public\extensions.js |
+esbuild.cmd --minify > .\public\extensions.min.js
 
 $htmf + $extensions |
 esbuild.cmd --format=iife |
-Tee-Object -FilePath htmf-all.js |
-esbuild.cmd --minify > htmf-all.min.js
+Tee-Object -FilePath .\public\htmf-all.js |
+esbuild.cmd --minify > .\public\htmf-all.min.js
