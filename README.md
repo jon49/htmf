@@ -42,4 +42,10 @@ form.
 You can get the main library and extensions in the `htmf-all.js` file.
 
 If you would like your app to be a bit snappier consider using the JavaScript
-library intant.page.
+library instant.page.
+
+## Version
+
+### 0.1
+
+Removed `hf-hidden` attribute as this is redundant - use the `noscript` tag instead.

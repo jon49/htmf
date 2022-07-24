@@ -1,5 +1,4 @@
 // @ts-check
-document.querySelectorAll("[hf-hidden]").forEach(x => x instanceof HTMLElement && (x.style.visibility = "hidden"))
 
 document.addEventListener("submit", async e => {
     try {
@@ -40,7 +39,7 @@ document.addEventListener("submit", async e => {
         if (contentType && contentType.indexOf("application/json") !== -1) {
             let data = JSON.parse(await response.json())
             document.dispatchEvent(new CustomEvent("received-json", { bubbles: false, detail: {data, form: $form, button: $button} }))
-        } else if (contentType.indexOf("html") > -1) {
+        } else if (contentType && contentType.indexOf("html") > -1) {
             let text = await response.text()
             htmlSwap({text, form: $form})
         } else {
@@ -59,6 +58,7 @@ document.addEventListener("submit", async e => {
  * @returns 
  */
 function htmlSwap(data) {
+    if (!data.text) return
     const template = document.createElement("template")
     template.innerHTML = data.text.trim()
     for (const el of template.content.childNodes) {
