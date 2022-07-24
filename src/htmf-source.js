@@ -1,5 +1,7 @@
 // @ts-check
 
+hf.version = "0.1"
+
 document.addEventListener("submit", async e => {
     try {
         /** @type {HTMLFormElement} */
