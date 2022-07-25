@@ -38,7 +38,7 @@ document.addEventListener("submit", async e => {
 
         const contentType = response.headers.get("content-type")
 
-        if (contentType && contentType.indexOf("application/json") !== -1) {
+        if (contentType && contentType.indexOf("application/json") > -1) {
             let data = JSON.parse(await response.json())
             document.dispatchEvent(new CustomEvent("received-json", { bubbles: false, detail: {data, form: $form, button: $button} }))
         } else if (contentType && contentType.indexOf("html") > -1) {
