@@ -1,5 +1,6 @@
 (() => {
-  hf.version = "0.1";
+  self.hf = {};
+  hf.version = "0.2";
   document.addEventListener("submit", async (e) => {
     try {
       const $form2 = e.target;

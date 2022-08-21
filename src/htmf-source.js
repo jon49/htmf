@@ -1,6 +1,8 @@
 // @ts-check
 
-hf.version = "0.1"
+// @ts-ignore
+self.hf = {}
+hf.version = "0.2"
 
 document.addEventListener("submit", async e => {
     try {
