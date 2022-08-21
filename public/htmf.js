@@ -1,5 +1,5 @@
 (() => {
-  document.querySelectorAll("[hf-hidden]").forEach((x) => x instanceof HTMLElement && (x.style.visibility = "hidden"));
+  hf.version = "0.1";
   document.addEventListener("submit", async (e) => {
     try {
       const $form2 = e.target;
@@ -9,14 +9,13 @@
       e.preventDefault();
       const preData = new FormData($form2);
       const method = $button.formMethod || $form2.method;
-      const url = new URL($button.getAttribute("formAction") && $button.formAction || $form2.action);
-      const options = {method, credentials: "same-origin", headers: new Headers({"HF-Request": "true"})};
+      const url = new URL($button.hasAttribute("formAction") && $button.formAction || $form2.action);
+      const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) };
       if (method === "post") {
         options.body = new URLSearchParams([...preData]);
       } else {
-        const query = new URLSearchParams(preData).toString();
-        if (query) {
-          url.search += (url.search ? "&" : "?") + query;
+        for (let e2 of preData.entries()) {
+          url.searchParams.append(...e2);
         }
       }
       const response = await fetch(url.href, options);
@@ -25,12 +24,12 @@
         return;
       }
       const contentType = response.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") !== -1) {
+      if (contentType && contentType.indexOf("application/json") > -1) {
         let data = JSON.parse(await response.json());
-        document.dispatchEvent(new CustomEvent("received-json", {bubbles: false, detail: {data, form: $form2, button: $button}}));
-      } else if (contentType.indexOf("html") > -1) {
+        $button.dispatchEvent(new CustomEvent("hf:json", { bubbles: true, detail: { data, form: $form2, button: $button } }));
+      } else if (contentType && contentType.indexOf("html") > -1) {
         let text = await response.text();
-        htmlSwap({text, form: $form2});
+        htmlSwap({ text, form: $form2, button: $button });
       } else {
         console.error(`Unhandled content type "${contentType}"`);
       }
@@ -41,37 +40,51 @@
         $form.submit();
     }
   });
-  function htmlSwap(data) {
+  function getAttribute(el, attributeName) {
+    return el.getAttribute(attributeName);
+  }
+  function getHtml(text) {
     const template = document.createElement("template");
-    template.innerHTML = data.text.trim();
-    for (const el of template.content.childNodes) {
-      if (!(el instanceof HTMLElement))
-        continue;
-      const query = el.getAttribute("target");
-      let target;
-      let swapType;
-      if (query) {
-        target = document.querySelector(query);
-        swapType = el.getAttribute("hf-swap") || "append";
-      } else if (el.id) {
-        target = document.getElementById(el.id);
-      } else {
-        target = document.body;
-      }
-      if (!target) {
-        target = data.form;
-      }
-      switch (swapType) {
-        case "append":
-          target.append(el);
-          break;
-        case "prepend":
-          target.prepend(el);
-          break;
-        case "replace":
-        default:
-          target.replaceWith(el);
-      }
+    template.innerHTML = text.trim();
+    return template.content;
+  }
+  function htmlSwap({ text, form, button }) {
+    if (!text)
+      return;
+    let target = getAttribute(button, "target") ?? getAttribute(form, "target");
+    let swap = getAttribute(button, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML";
+    let $target = (target ? document.querySelector(target) : form) ?? form;
+    switch (swap) {
+      case "innerHTML":
+        $target.innerHTML = text;
+        break;
+      case "outerHTML":
+        $target.outerHTML = text;
+        break;
+      case "append":
+        $target.append(getHtml(text));
+        break;
+      case "prepend":
+        $target.prepend(getHtml(text));
+        break;
+      case "replace":
+        $target.replaceWith(getHtml(text));
+        break;
+      case "oob":
+        for (let el of getHtml(text).childNodes) {
+          if (!(el instanceof HTMLElement))
+            continue;
+          let targetId = el.id ?? el.dataset.id;
+          let $t = document.getElementById(targetId);
+          if (!$t) {
+            console.warn(`The target ${targetId} could not be found for swap.`);
+            continue;
+          }
+          $t.replaceWith(el);
+        }
+        break;
+      default:
+        console.warn(`Unknown swap type: "${swap}".`);
     }
     var $focus = document.querySelector("[autofocus]");
     if ($focus instanceof HTMLElement) {

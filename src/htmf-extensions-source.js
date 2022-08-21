@@ -39,12 +39,19 @@ function debounce(func, key, option = { args: [], wait: 50, isImmediate: false, 
 }
 
 /**
- * @param {HTMLInputElement} self 
+ * @param {HTMLInputElement | string} target
  */
-function click(self) {
-    var $form = self.form
-    if (!$form) return
-    ($form.querySelector("button") || $form.querySelector("[type='submit']"))?.click()
+function click(target) {
+    if (typeof target === "string") {
+        let $target = document.querySelector(target)
+        if ($target instanceof HTMLElement) {
+            $target.click()
+        }
+    } else {
+        var $form = target.form
+        if (!$form) return
+        ($form.querySelector("button") || $form.querySelector("[type='submit']"))?.click()
+    }
 }
 
 // @ts-ignore
