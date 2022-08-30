@@ -29,11 +29,6 @@
       if ($target instanceof HTMLElement) {
         $target.click();
       }
-    } else {
-      var $form = target.form;
-      if (!$form)
-        return;
-      ($form.querySelector("button") || $form.querySelector("[type='submit']"))?.click();
     }
   }
   hf = { debounce, click };

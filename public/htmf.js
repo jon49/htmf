@@ -1,14 +1,14 @@
 (() => {
   self.hf = {};
-  hf.version = "0.3";
+  hf.version = "0.4";
   const has = (attribute) => (el) => el.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
   function createEvent(el, eventName, detail) {
     el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
   }
-  document.addEventListener("submit", async (e) => {
+  hf.submit = async (e) => {
     try {
-      const $form2 = e.target;
+      const $form2 = e instanceof HTMLFormElement ? e : e.target;
       if (inFlight.get($form2)) {
         return;
       } else {
@@ -17,7 +17,7 @@
       const $button = document.activeElement;
       if ([$form2, $button].find(has("hf-ignore")))
         return;
-      e.preventDefault();
+      e?.preventDefault();
       const preData = new FormData($form2);
       const method = $button.formMethod || $form2.method;
       const url = new URL(has("formAction")($button) && $button.formAction || $form2.action);
@@ -58,7 +58,8 @@
       if ($form instanceof HTMLFormElement)
         $form.submit();
     }
-  });
+  };
+  document.addEventListener("submit", hf.submit);
   function getAttribute(el, attributeName) {
     return el.getAttribute(attributeName);
   }
