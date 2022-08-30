@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.3"
+hf.version = "0.4"
 
 const has =
     (/** @type {string} */ attribute) =>
@@ -20,11 +20,11 @@ function createEvent(el, eventName, detail) {
     el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }))
 }
 
-document.addEventListener("submit", async e => {
+hf.submit = async (/** @type {{ target: HTMLFormElement; preventDefault: () => void; }} */ e) => {
     try {
         /** @type {HTMLFormElement} */
         // @ts-ignore
-        const $form = e.target
+        const $form = e instanceof HTMLFormElement ? e : e.target
 
         if (inFlight.get($form)) {
             return
@@ -37,7 +37,7 @@ document.addEventListener("submit", async e => {
         const $button = document.activeElement
 
         if ([$form, $button].find(has("hf-ignore"))) return
-        e.preventDefault()
+        e?.preventDefault()
 
         const preData = new FormData($form)
         const method = $button.formMethod || $form.method
@@ -87,7 +87,10 @@ document.addEventListener("submit", async e => {
         var $form = e?.target
         if ($form instanceof HTMLFormElement) $form.submit()
     }
-})
+}
+
+// @ts-ignore
+document.addEventListener("submit", hf.submit)
 
 /**
  * @param {HTMLElement} el 
