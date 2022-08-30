@@ -9,11 +9,20 @@ const has =
     (/** @type {{ hasAttribute: (arg0: string) => any; }} */ el) =>
         el.hasAttribute(attribute)
 
+const inFlight = new WeakMap
+
 document.addEventListener("submit", async e => {
     try {
         /** @type {HTMLFormElement} */
         // @ts-ignore
         const $form = e.target
+
+        if (inFlight.get($form)) {
+            return
+        } else {
+            inFlight.set($form, true)
+        }
+
         /** @type {HTMLButtonElement|HTMLInputElement} */
         // @ts-ignore
         const $button = document.activeElement
@@ -53,6 +62,8 @@ document.addEventListener("submit", async e => {
         } else {
             console.error(`Unhandled content type "${contentType}"`)
         }
+    
+        inFlight.delete($form)
     }
     catch (ex) {
         console.error(ex)
