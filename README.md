@@ -5,21 +5,22 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 1.64 kB minified and 1.0 kB minified and zipped which is about
-1/10th the size of HTMX.
+`htmf` is 2.01 kB minified and 1.18 kB minified and zipped. With helpers it is
+2.57 kB minified and 1.43 kB zipped.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
 will be parsed back into the HTML. When the `htmf` library makes a call to
 the back end it will add the header `HF-Request: true` to the HTTP call.
 
-Use `id` or `target` attributes in the return `HTML` to give a target
-otherwise it will replace the `body`.
+Use `target` in the calling form or button to decide where the returning `HTML`
+will be placed. Defaults to the form itself.
 
-`target` defaults to a swap of `append` rather than `replace`.
+`target` defaults to a swap of `innerHTML`.
 
 If you don't want it to replace the contents you can add the attribute
-`hf-swap` with types `append`, `prepend`, and `replace`.
+`hf-swap` with types `append`, `prepend`, `outerHTML` (replace), and `oob` for
+out-of-bound replacements (matches on the IDs of the elements).
 
 After a swap it will search for `autofocus` attribute and focus on that
 element.
@@ -27,10 +28,7 @@ element.
 If you would like a form to not be controlled by `htmf` place the attribute
 `hf-ignore` on the form or on the submit button.
 
-If you would like some buttons hidden once the HTML is loaded use the
-attribute `hf-hidden`.
-
-If `application/json` is returned an event called `received-json` will be
+If `application/json` is returned an event called `hf:json` will be
 dispatched the `detail` will contain the form which initiated the call, the
 parsed data, and the button which initiated the call.
 
@@ -39,12 +37,24 @@ through the `hf` global variable. `debounce` which allows you to debounce a
 function. It also includes `click` which will click a button in the current
 form.
 
+If you would like to dispatch a custom event send back the header `hf-events`
+with a JSON value with the name of the events as keys.
+
 You can get the main library and extensions in the `htmf-all.js` file.
 
 If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.3
+
+Prevent double submits. Added ability to send events from `JSON` in a header.
+Added ability to delete elements with empty string.
+
+### 0.2
+
+Default to `innerHTML` swap type. Determine target from the form itself.
 
 ### 0.1
 
