@@ -113,7 +113,7 @@ function getHtml(text) {
  * @returns 
  */
 function htmlSwap({text, form, button}) {
-    if (text === undefined || text === null) return
+    if (text === void 0) return
 
     let target = getAttribute(button, "target") ?? getAttribute(form, "target")
     let swap = getAttribute(button, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML"
