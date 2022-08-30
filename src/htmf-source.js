@@ -4,6 +4,11 @@
 self.hf = {}
 hf.version = "0.2"
 
+const has =
+    (/** @type {string} */ attribute) =>
+    (/** @type {{ hasAttribute: (arg0: string) => any; }} */ el) =>
+        el.hasAttribute(attribute)
+
 document.addEventListener("submit", async e => {
     try {
         /** @type {HTMLFormElement} */
@@ -13,12 +18,12 @@ document.addEventListener("submit", async e => {
         // @ts-ignore
         const $button = document.activeElement
 
-        if ($form.hasAttribute("hf-ignore") || $button.hasAttribute("hf-ignore")) return
+        if ([$form, $button].find(has("hf-ignore"))) return
         e.preventDefault()
 
         const preData = new FormData($form)
         const method = $button.formMethod || $form.method
-        const url = new URL(($button.hasAttribute("formAction") && $button.formAction) || $form.action)
+        const url = new URL((has("formAction")($button) && $button.formAction) || $form.action)
         const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) }
         if (method === "post") {
             // @ts-ignore
