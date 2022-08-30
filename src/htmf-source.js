@@ -11,6 +11,15 @@ const has =
 
 const inFlight = new WeakMap
 
+/**
+ * @param {{ dispatchEvent: (arg0: CustomEvent<any>) => void; }} el
+ * @param {string} eventName
+ * @param {any} detail
+ */
+function createEvent(el, eventName, detail) {
+    el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }))
+}
+
 document.addEventListener("submit", async e => {
     try {
         /** @type {HTMLFormElement} */
@@ -55,14 +64,22 @@ document.addEventListener("submit", async e => {
 
         if (contentType && contentType.indexOf("application/json") > -1) {
             let data = JSON.parse(await response.json())
-            $button.dispatchEvent(new CustomEvent("hf:json", { bubbles: true, detail: {data, form: $form, button: $button} }))
+            createEvent($button, "hf:json", {data, form: $form, button: $button})
         } else if (contentType && contentType.indexOf("html") > -1) {
             let text = await response.text()
             htmlSwap({text, form: $form, button: $button})
         } else {
             console.error(`Unhandled content type "${contentType}"`)
         }
-    
+
+        let eventsMaybe = response.headers.get("hf-events")
+        if (eventsMaybe) {
+            let events = JSON.parse(eventsMaybe)
+            for (let [eventName, detail] of Object.entries(events)) {
+                createEvent($button, eventName, detail)
+            }
+        }
+
         inFlight.delete($form)
     }
     catch (ex) {
