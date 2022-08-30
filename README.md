@@ -5,8 +5,8 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.01 kB minified and 1.18 kB minified and zipped. With helpers it is
-2.57 kB minified and 1.43 kB zipped.
+`htmf` is 2.06 kB minified and 1.20 kB minified and zipped. With helpers it is
+2.52 kB minified and 1.41 kB zipped.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
@@ -46,6 +46,11 @@ If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.4
+
+Added ability to submit the form directly through `htmf`. Removed the ability of
+`click` to submit the form through the button click.
 
 ### 0.3
 
