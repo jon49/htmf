@@ -1,6 +1,6 @@
 (() => {
   self.hf = {};
-  hf.version = "0.2";
+  hf.version = "0.3";
   const has = (attribute) => (el) => el.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
   function createEvent(el, eventName, detail) {
@@ -68,7 +68,7 @@
     return template.content;
   }
   function htmlSwap({ text, form, button }) {
-    if (text === void 0 || text === null)
+    if (text === void 0)
       return;
     let target = getAttribute(button, "target") ?? getAttribute(form, "target");
     let swap = getAttribute(button, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML";
@@ -85,9 +85,6 @@
         break;
       case "prepend":
         $target.prepend(getHtml(text));
-        break;
-      case "replace":
-        $target.replaceWith(getHtml(text));
         break;
       case "oob":
         for (let el of getHtml(text).childNodes) {
