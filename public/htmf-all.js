@@ -1,16 +1,26 @@
 (() => {
   self.hf = {};
   hf.version = "0.2";
+  const has = (attribute) => (el) => el.hasAttribute(attribute);
+  const inFlight = /* @__PURE__ */ new WeakMap();
+  function createEvent(el, eventName, detail) {
+    el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
+  }
   document.addEventListener("submit", async (e) => {
     try {
       const $form2 = e.target;
+      if (inFlight.get($form2)) {
+        return;
+      } else {
+        inFlight.set($form2, true);
+      }
       const $button = document.activeElement;
-      if ($form2.hasAttribute("hf-ignore") || $button.hasAttribute("hf-ignore"))
+      if ([$form2, $button].find(has("hf-ignore")))
         return;
       e.preventDefault();
       const preData = new FormData($form2);
       const method = $button.formMethod || $form2.method;
-      const url = new URL($button.hasAttribute("formAction") && $button.formAction || $form2.action);
+      const url = new URL(has("formAction")($button) && $button.formAction || $form2.action);
       const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) };
       if (method === "post") {
         options.body = new URLSearchParams([...preData]);
@@ -27,13 +37,21 @@
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.indexOf("application/json") > -1) {
         let data = JSON.parse(await response.json());
-        $button.dispatchEvent(new CustomEvent("hf:json", { bubbles: true, detail: { data, form: $form2, button: $button } }));
+        createEvent($button, "hf:json", { data, form: $form2, button: $button });
       } else if (contentType && contentType.indexOf("html") > -1) {
         let text = await response.text();
         htmlSwap({ text, form: $form2, button: $button });
       } else {
         console.error(`Unhandled content type "${contentType}"`);
       }
+      let eventsMaybe = response.headers.get("hf-events");
+      if (eventsMaybe) {
+        let events = JSON.parse(eventsMaybe);
+        for (let [eventName, detail] of Object.entries(events)) {
+          createEvent($button, eventName, detail);
+        }
+      }
+      inFlight.delete($form2);
     } catch (ex) {
       console.error(ex);
       var $form = e?.target;
@@ -50,7 +68,7 @@
     return template.content;
   }
   function htmlSwap({ text, form, button }) {
-    if (!text)
+    if (text === void 0 || text === null)
       return;
     let target = getAttribute(button, "target") ?? getAttribute(form, "target");
     let swap = getAttribute(button, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML";
