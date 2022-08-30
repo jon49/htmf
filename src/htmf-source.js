@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.2"
+hf.version = "0.3"
 
 const has =
     (/** @type {string} */ attribute) =>
@@ -132,9 +132,6 @@ function htmlSwap({text, form, button}) {
             break
         case "prepend":
             $target.prepend(getHtml(text))
-            break
-        case "replace":
-            $target.replaceWith(getHtml(text))
             break
         case "oob":
             for (let el of getHtml(text).childNodes) {
