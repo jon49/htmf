@@ -26,6 +26,13 @@ document.addEventListener("submit", async e => {
     // @ts-ignore
     const $form = e instanceof HTMLFormElement ? e : e.target
 
+    /** @type {HTMLButtonElement|HTMLInputElement} */
+    // @ts-ignore
+    const $button = document.activeElement
+
+    if ([$form, $button].find(has("hf-ignore"))) return
+    e?.preventDefault()
+
     if (inFlight.get($form)) {
         return
     } else {
@@ -33,14 +40,6 @@ document.addEventListener("submit", async e => {
     }
 
     try {
-
-
-        /** @type {HTMLButtonElement|HTMLInputElement} */
-        // @ts-ignore
-        const $button = document.activeElement
-
-        if ([$form, $button].find(has("hf-ignore"))) return
-        e?.preventDefault()
 
         const preData = new FormData($form)
         const method = $button.formMethod || $form.method

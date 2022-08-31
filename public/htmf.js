@@ -8,16 +8,16 @@
   }
   document.addEventListener("submit", async (e) => {
     const $form = e instanceof HTMLFormElement ? e : e.target;
+    const $button = document.activeElement;
+    if ([$form, $button].find(has("hf-ignore")))
+      return;
+    e?.preventDefault();
     if (inFlight.get($form)) {
       return;
     } else {
       inFlight.set($form, true);
     }
     try {
-      const $button = document.activeElement;
-      if ([$form, $button].find(has("hf-ignore")))
-        return;
-      e?.preventDefault();
       const preData = new FormData($form);
       const method = $button.formMethod || $form.method;
       const url = new URL(has("formAction")($button) && $button.formAction || $form.action);

@@ -39,6 +39,10 @@ library instant.page.
 
 ## Version
 
+### 0.51
+
+Bug fix - `preventDefault()` wasn't called.
+
 ### 0.5
 
 Removed `click` and `submit` methods as [`requestSubmit` is
