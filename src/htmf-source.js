@@ -22,16 +22,18 @@ function createEvent(el, eventName, detail) {
 
 // @ts-ignore
 document.addEventListener("submit", async e => {
-    try {
-        /** @type {HTMLFormElement} */
-        // @ts-ignore
-        const $form = e instanceof HTMLFormElement ? e : e.target
+    /** @type {HTMLFormElement} */
+    // @ts-ignore
+    const $form = e instanceof HTMLFormElement ? e : e.target
 
-        if (inFlight.get($form)) {
-            return
-        } else {
-            inFlight.set($form, true)
-        }
+    if (inFlight.get($form)) {
+        return
+    } else {
+        inFlight.set($form, true)
+    }
+
+    try {
+
 
         /** @type {HTMLButtonElement|HTMLInputElement} */
         // @ts-ignore
@@ -80,13 +82,11 @@ document.addEventListener("submit", async e => {
                 createEvent($button, eventName, detail)
             }
         }
-
-        inFlight.delete($form)
-    }
-    catch (ex) {
+    } catch (ex) {
         console.error(ex)
-        var $form = e?.target
         if ($form instanceof HTMLFormElement) $form.submit()
+    } finally {
+        inFlight.delete($form)
     }
 })
 
