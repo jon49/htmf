@@ -1,26 +1,26 @@
 (() => {
   self.hf = {};
-  hf.version = "0.4";
+  hf.version = "0.5";
   const has = (attribute) => (el) => el.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
   function createEvent(el, eventName, detail) {
     el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
   }
   document.addEventListener("submit", async (e) => {
+    const $form = e instanceof HTMLFormElement ? e : e.target;
+    if (inFlight.get($form)) {
+      return;
+    } else {
+      inFlight.set($form, true);
+    }
     try {
-      const $form2 = e instanceof HTMLFormElement ? e : e.target;
-      if (inFlight.get($form2)) {
-        return;
-      } else {
-        inFlight.set($form2, true);
-      }
       const $button = document.activeElement;
-      if ([$form2, $button].find(has("hf-ignore")))
+      if ([$form, $button].find(has("hf-ignore")))
         return;
       e?.preventDefault();
-      const preData = new FormData($form2);
-      const method = $button.formMethod || $form2.method;
-      const url = new URL(has("formAction")($button) && $button.formAction || $form2.action);
+      const preData = new FormData($form);
+      const method = $button.formMethod || $form.method;
+      const url = new URL(has("formAction")($button) && $button.formAction || $form.action);
       const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) };
       if (method === "post") {
         options.body = new URLSearchParams([...preData]);
@@ -37,10 +37,10 @@
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.indexOf("application/json") > -1) {
         let data = JSON.parse(await response.json());
-        createEvent($button, "hf:json", { data, form: $form2, button: $button });
+        createEvent($button, "hf:json", { data, form: $form, button: $button });
       } else if (contentType && contentType.indexOf("html") > -1) {
         let text = await response.text();
-        htmlSwap({ text, form: $form2, button: $button });
+        htmlSwap({ text, form: $form, button: $button });
       } else {
         console.error(`Unhandled content type "${contentType}"`);
       }
@@ -51,12 +51,12 @@
           createEvent($button, eventName, detail);
         }
       }
-      inFlight.delete($form2);
     } catch (ex) {
       console.error(ex);
-      var $form = e?.target;
       if ($form instanceof HTMLFormElement)
         $form.submit();
+    } finally {
+      inFlight.delete($form);
     }
   });
   function getAttribute(el, attributeName) {

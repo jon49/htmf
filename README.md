@@ -5,7 +5,7 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.04 kB minified and 1.19 kB minified and zipped.
+`htmf` is 2.03 kB minified and 1.18 kB minified and zipped.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
