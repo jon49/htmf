@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.4"
+hf.version = "0.5"
 
 const has =
     (/** @type {string} */ attribute) =>
