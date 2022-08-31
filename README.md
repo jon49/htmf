@@ -5,8 +5,7 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.06 kB minified and 1.20 kB minified and zipped. With helpers it is
-2.52 kB minified and 1.41 kB zipped.
+`htmf` is 2.04 kB minified and 1.19 kB minified and zipped.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
@@ -32,20 +31,23 @@ If `application/json` is returned an event called `hf:json` will be
 dispatched the `detail` will contain the form which initiated the call, the
 parsed data, and the button which initiated the call.
 
-A couple of helper functions are included in `htmf-extensions.js` available
-through the `hf` global variable. `debounce` which allows you to debounce a
-function. It also includes `click` which will click a button in the current
-form.
-
 If you would like to dispatch a custom event send back the header `hf-events`
 with a JSON value with the name of the events as keys.
-
-You can get the main library and extensions in the `htmf-all.js` file.
 
 If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.5
+
+Removed `click` and `submit` methods as [`requestSubmit` is
+available](https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/requestSubmit).
+Note, [a polyfill](https://github.com/javan/form-request-submit-polyfill) might be needed.
+
+Removed `debounce` helper (which removes all helpers for this project). Just use
+[underscore.js](https://github.com/jashkenas/underscore/) or any other library
+implementation of it.
 
 ### 0.4
 
@@ -63,4 +65,5 @@ Default to `innerHTML` swap type. Determine target from the form itself.
 
 ### 0.1
 
-Removed `hf-hidden` attribute as this is redundant - use the `noscript` tag instead.
+Removed `hf-hidden` attribute as this is redundant - use the `noscript` html tag
+instead.

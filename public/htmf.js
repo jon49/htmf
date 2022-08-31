@@ -6,7 +6,7 @@
   function createEvent(el, eventName, detail) {
     el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
   }
-  hf.submit = async (e) => {
+  document.addEventListener("submit", async (e) => {
     try {
       const $form2 = e instanceof HTMLFormElement ? e : e.target;
       if (inFlight.get($form2)) {
@@ -58,8 +58,7 @@
       if ($form instanceof HTMLFormElement)
         $form.submit();
     }
-  };
-  document.addEventListener("submit", hf.submit);
+  });
   function getAttribute(el, attributeName) {
     return el.getAttribute(attributeName);
   }

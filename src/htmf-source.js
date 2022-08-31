@@ -20,7 +20,8 @@ function createEvent(el, eventName, detail) {
     el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }))
 }
 
-hf.submit = async (/** @type {{ target: HTMLFormElement; preventDefault: () => void; }} */ e) => {
+// @ts-ignore
+document.addEventListener("submit", async e => {
     try {
         /** @type {HTMLFormElement} */
         // @ts-ignore
@@ -87,10 +88,7 @@ hf.submit = async (/** @type {{ target: HTMLFormElement; preventDefault: () => v
         var $form = e?.target
         if ($form instanceof HTMLFormElement) $form.submit()
     }
-}
-
-// @ts-ignore
-document.addEventListener("submit", hf.submit)
+})
 
 /**
  * @param {HTMLElement} el 
