@@ -71,7 +71,8 @@ document.addEventListener("submit", async e => {
             let text = await response.text()
             htmlSwap({text, form: $form, button: $button})
         } else {
-            console.error(`Unhandled content type "${contentType}"`)
+            if (![204, 400].includes(response.status))
+                console.error(`Unhandled content type "${contentType}"`)
         }
 
         let eventsMaybe = response.headers.get("hf-events")

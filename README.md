@@ -41,7 +41,8 @@ library instant.page.
 
 ### 0.51
 
-Bug fix - `preventDefault()` wasn't called.
+Bug fix - `preventDefault()` wasn't called.  
+Bug fix - For http status of 204 or 400 don't print content type error message.
 
 ### 0.5
 
