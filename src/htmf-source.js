@@ -116,6 +116,8 @@ function getHtml(text) {
 function htmlSwap({text, form, button}) {
     if (text === void 0) return
 
+    beforeUnload()
+
     let target = getAttribute(button, "target") ?? getAttribute(form, "target")
     let swap = getAttribute(button, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML"
 
@@ -154,5 +156,23 @@ function htmlSwap({text, form, button}) {
     if ($focus instanceof HTMLElement) {
         $focus.removeAttribute("autofocus")
         $focus.focus()
+    } else if(![form, button].find(has("hf-ignore-scroll"))) {
+        onLoad()
+    }
+
+}
+
+let pageLocation
+function beforeUnload() {
+    pageLocation = { y: window.scrollY, height: document.body.scrollHeight }
+}
+
+function onLoad() {
+    if (!pageLocation) return
+    let { y, height } = pageLocation
+    if (y) {
+        let scrollToY = y + document.body.scrollHeight - height
+        if (scrollToY !== y)
+            window.scrollTo({ top: scrollToY, behavior: 'smooth' })
     }
 }

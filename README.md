@@ -5,7 +5,7 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.03 kB minified and 1.18 kB minified and zipped.
+`htmf` is 2.29 kB minified and 1.31 kB minified and zipped.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
@@ -24,6 +24,11 @@ out-of-bound replacements (matches on the IDs of the elements).
 After a swap it will search for `autofocus` attribute and focus on that
 element.
 
+If `autofocus` isn't found it will try to scroll to the previous position. This
+is great for when appending above the `input` element. You can opt out of this
+behavior by attaching `hf-ignore-scroll` to the submitting button or to the
+submitting form.
+
 If you would like a form to not be controlled by `htmf` place the attribute
 `hf-ignore` on the form or on the submit button.
 
@@ -38,6 +43,10 @@ If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.6
+
+Added auto scroll for when appending above the input.
 
 ### 0.51
 
