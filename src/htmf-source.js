@@ -75,12 +75,16 @@ document.addEventListener("submit", async e => {
                 console.error(`Unhandled content type "${contentType}"`)
         }
 
-        let eventsMaybe = response.headers.get("hf-events")
-        if (eventsMaybe) {
-            let events = JSON.parse(eventsMaybe)
-            for (let [eventName, detail] of Object.entries(events)) {
-                createEvent($button, eventName, detail)
+        let maybeEvents = response.headers.get("hf-events")
+        try {
+            if (maybeEvents) {
+                let events = JSON.parse(maybeEvents)
+                for (let [eventName, detail] of Object.entries(events)) {
+                    createEvent($button, eventName, detail)
+                }
             }
+        } catch (ex) {
+            console.error(ex, maybeEvents)
         }
     } catch (ex) {
         console.error(ex)
