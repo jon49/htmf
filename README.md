@@ -5,7 +5,7 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.33 kB minified and 1.32 kB minified and zipped.
+`htmf` is 2.45 kB minified and 1.39 kB minified and zipped.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
@@ -43,6 +43,16 @@ If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.8
+
+Fixed bug when a button which created the event doesn't exist.
+
+### 0.7
+
+Added more events and made events cancelable.
+
+Added events: `hf:completed` and `hf:redirected`.
 
 ### 0.6
 

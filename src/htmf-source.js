@@ -2,12 +2,12 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.5"
+hf.version = "0.8"
 
 const has =
     (/** @type {string} */ attribute) =>
-    (/** @type {{ hasAttribute: (arg0: string) => any; }} */ el) =>
-        el.hasAttribute(attribute)
+    (/** @type {{ hasAttribute: (arg0: string) => any; }|undefined} */ el) =>
+        el?.hasAttribute(attribute)
 
 const inFlight = new WeakMap
 
@@ -15,9 +15,11 @@ const inFlight = new WeakMap
  * @param {{ dispatchEvent: (arg0: CustomEvent<any>) => void; }} el
  * @param {string} eventName
  * @param {any} detail
+ * @returns {boolean}
  */
-function createEvent(el, eventName, detail) {
-    el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }))
+function publish(el, eventName, detail) {
+    // @ts-ignore
+    return el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }))
 }
 
 // @ts-ignore
@@ -26,9 +28,11 @@ document.addEventListener("submit", async e => {
     // @ts-ignore
     const $form = e instanceof HTMLFormElement ? e : e.target
 
-    /** @type {HTMLButtonElement|HTMLInputElement} */
+    /** @type {HTMLButtonElement|HTMLInputElement|undefined} */
     // @ts-ignore
-    const $button = document.activeElement
+    let $button = document.activeElement
+    if ($button?.form !== $form) $button = void 0
+    const $originator = $button ?? $form
 
     if ([$form, $button].find(has("hf-ignore"))) return
     e?.preventDefault()
@@ -39,11 +43,13 @@ document.addEventListener("submit", async e => {
         inFlight.set($form, true)
     }
 
+    const method = $button?.formMethod || $form.method
+    const eventData = { form: $form, button: $button, method }
+
     try {
 
         const preData = new FormData($form)
-        const method = $button.formMethod || $form.method
-        const url = new URL((has("formAction")($button) && $button.formAction) || $form.action)
+        const url = new URL((has("formAction")($button) && $button?.formAction) || $form.action)
         const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) }
         if (method === "post") {
             // @ts-ignore
@@ -58,7 +64,9 @@ document.addEventListener("submit", async e => {
         const response = await fetch(url.href, options)
 
         if (response.redirected) {
-            location.href = response.url
+            if (publish($originator, "hf:redirected", eventData)) {
+                location.href = response.url
+            }
             return
         }
 
@@ -66,10 +74,10 @@ document.addEventListener("submit", async e => {
 
         if (contentType && contentType.indexOf("application/json") > -1) {
             let data = JSON.parse(await response.json())
-            createEvent($button, "hf:json", {data, form: $form, button: $button})
+            publish($originator, "hf:json", {...eventData, data})
         } else if (contentType && contentType.indexOf("html") > -1) {
             let text = await response.text()
-            htmlSwap({text, form: $form, button: $button})
+            htmlSwap({...eventData, text})
         } else {
             if (![204, 400].includes(response.status))
                 console.error(`Unhandled content type "${contentType}"`)
@@ -80,7 +88,7 @@ document.addEventListener("submit", async e => {
             if (maybeEvents) {
                 let events = JSON.parse(maybeEvents)
                 for (let [eventName, detail] of Object.entries(events)) {
-                    createEvent($button, eventName, detail)
+                    publish($originator, eventName, detail)
                 }
             }
         } catch (ex) {
@@ -91,16 +99,17 @@ document.addEventListener("submit", async e => {
         if ($form instanceof HTMLFormElement) $form.submit()
     } finally {
         inFlight.delete($form)
+        publish($originator, "hf:completed", eventData)
     }
 })
 
 /**
- * @param {HTMLElement} el 
+ * @param {HTMLElement | undefined} el 
  * @param {string} attributeName 
- * @returns {string | null}
+ * @returns {string | null | undefined}
  */
 function getAttribute(el, attributeName) {
-    return el.getAttribute(attributeName)
+    return el?.getAttribute(attributeName)
 }
 
 /**
@@ -114,7 +123,7 @@ function getHtml(text) {
 }
 
 /**
- * @param {{ text: string|undefined, form: HTMLFormElement, button: HTMLButtonElement | HTMLInputElement }} data 
+ * @param {{ text: string|undefined, form: HTMLFormElement, button: HTMLButtonElement | HTMLInputElement | undefined }} data 
  * @returns 
  */
 function htmlSwap({text, form, button}) {

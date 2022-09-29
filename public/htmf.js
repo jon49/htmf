@@ -1,14 +1,17 @@
 (() => {
   self.hf = {};
-  hf.version = "0.5";
-  const has = (attribute) => (el) => el.hasAttribute(attribute);
+  hf.version = "0.8";
+  const has = (attribute) => (el) => el?.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
-  function createEvent(el, eventName, detail) {
-    el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
+  function publish(el, eventName, detail) {
+    return el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }));
   }
   document.addEventListener("submit", async (e) => {
     const $form = e instanceof HTMLFormElement ? e : e.target;
-    const $button = document.activeElement;
+    let $button = document.activeElement;
+    if ($button?.form !== $form)
+      $button = void 0;
+    const $originator = $button ?? $form;
     if ([$form, $button].find(has("hf-ignore")))
       return;
     e?.preventDefault();
@@ -17,10 +20,11 @@
     } else {
       inFlight.set($form, true);
     }
+    const method = $button?.formMethod || $form.method;
+    const eventData = { form: $form, button: $button, method };
     try {
       const preData = new FormData($form);
-      const method = $button.formMethod || $form.method;
-      const url = new URL(has("formAction")($button) && $button.formAction || $form.action);
+      const url = new URL(has("formAction")($button) && $button?.formAction || $form.action);
       const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) };
       if (method === "post") {
         options.body = new URLSearchParams([...preData]);
@@ -31,16 +35,18 @@
       }
       const response = await fetch(url.href, options);
       if (response.redirected) {
-        location.href = response.url;
+        if (publish($originator, "hf:redirected", eventData)) {
+          location.href = response.url;
+        }
         return;
       }
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.indexOf("application/json") > -1) {
         let data = JSON.parse(await response.json());
-        createEvent($button, "hf:json", { data, form: $form, button: $button });
+        publish($originator, "hf:json", { ...eventData, data });
       } else if (contentType && contentType.indexOf("html") > -1) {
         let text = await response.text();
-        htmlSwap({ text, form: $form, button: $button });
+        htmlSwap({ ...eventData, text });
       } else {
         if (![204, 400].includes(response.status))
           console.error(`Unhandled content type "${contentType}"`);
@@ -50,7 +56,7 @@
         if (maybeEvents) {
           let events = JSON.parse(maybeEvents);
           for (let [eventName, detail] of Object.entries(events)) {
-            createEvent($button, eventName, detail);
+            publish($originator, eventName, detail);
           }
         }
       } catch (ex) {
@@ -62,10 +68,11 @@
         $form.submit();
     } finally {
       inFlight.delete($form);
+      publish($originator, "hf:completed", eventData);
     }
   });
   function getAttribute(el, attributeName) {
-    return el.getAttribute(attributeName);
+    return el?.getAttribute(attributeName);
   }
   function getHtml(text) {
     const template = document.createElement("template");
