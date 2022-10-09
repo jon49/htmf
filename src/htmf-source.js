@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.8"
+hf.version = "0.10"
 
 const has =
     (/** @type {string} */ attribute) =>
@@ -64,8 +64,13 @@ document.addEventListener("submit", async e => {
         const response = await fetch(url.href, options)
 
         if (response.redirected) {
-            if (publish($originator, "hf:redirected", eventData)) {
-                location.href = response.url
+            location.href = response.url
+            return
+        }
+        if (response.status === 205) {
+            let url = response.headers.get("location")
+            if (publish($originator, "hf:reset-content", { ...eventData, url }) && url) {
+                location.href = url
             }
             return
         }
