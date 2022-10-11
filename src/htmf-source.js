@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.10"
+hf.version = "0.11"
 
 const has =
     (/** @type {string} */ attribute) =>
@@ -132,7 +132,7 @@ function getHtml(text) {
  * @returns 
  */
 function htmlSwap({text, form, button}) {
-    if (text === void 0) return
+    if (text == null) return
 
     beforeUnload()
 

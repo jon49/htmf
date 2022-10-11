@@ -1,6 +1,6 @@
 (() => {
   self.hf = {};
-  hf.version = "0.10";
+  hf.version = "0.11";
   const has = (attribute) => (el) => el?.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
   function publish(el, eventName, detail) {
@@ -85,7 +85,7 @@
     return template.content;
   }
   function htmlSwap({ text, form, button }) {
-    if (text === void 0)
+    if (text == null)
       return;
     beforeUnload();
     let target = getAttribute(button, "target") ?? getAttribute(form, "target");
