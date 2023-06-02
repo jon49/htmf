@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.11"
+hf.version = "0.2"
 
 const has =
     (/** @type {string} */ attribute) =>
@@ -12,15 +12,28 @@ const has =
 const inFlight = new WeakMap
 
 /**
- * @param {{ dispatchEvent: (arg0: CustomEvent<any>) => void; }} el
+ * @param {Element} el
  * @param {string} eventName
  * @param {any} detail
- * @returns {boolean}
+ * @returns {Promise<undefined>}
  */
-function publish(el, eventName, detail) {
-    // @ts-ignore
-    return el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }))
+async function publish(el, eventName, detail) {
+    if (!el.isConnected) {
+        // @ts-ignore
+        el = document
+    }
+    let result = el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }))
+    if (detail?.wait) await detail.wait()
+    if (!result) return Promise.reject()
+    return
 }
+
+document.addEventListener("hf:swap", async e => {
+    /** @type {{ detail: { text: string|undefined, form: HTMLFormElement, button: HTMLButtonElement | HTMLInputElement | undefined }}} */
+    // @ts-ignore
+    const { detail } = e
+    htmlSwap(detail)
+})
 
 // @ts-ignore
 document.addEventListener("submit", async e => {
@@ -40,14 +53,13 @@ document.addEventListener("submit", async e => {
     if (inFlight.get($form)) {
         return
     } else {
-        inFlight.set($form, true)
+        inFlight.set($form, 1)
     }
 
     const method = $button?.formMethod || $form.method
     const eventData = { form: $form, button: $button, method }
 
     try {
-
         const preData = new FormData($form)
         const url = new URL((has("formAction")($button) && $button?.formAction) || $form.action)
         const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) }
@@ -60,8 +72,12 @@ document.addEventListener("submit", async e => {
                 url.searchParams.append(...e)
             }
         }
+        eventData.xhr = { url, options }
+        await publish($originator, "hf:beforeRequest", eventData)
         // @ts-ignore
         const response = await fetch(url.href, options)
+        eventData.xhr.response = response
+        await publish($originator, "hf:afterRequest", eventData)
 
         if (response.redirected) {
             location.href = response.url
@@ -69,32 +85,31 @@ document.addEventListener("submit", async e => {
         }
         if (response.status === 205) {
             let url = response.headers.get("location")
-            if (publish($originator, "hf:reset-content", { ...eventData, url }) && url) {
-                location.href = url
-            }
+            url && (location.href = url)
             return
         }
 
         const contentType = response.headers.get("content-type")
 
-        if (contentType && contentType.indexOf("application/json") > -1) {
+        if (contentType?.includes("application/json")) {
             let data = JSON.parse(await response.json())
-            publish($originator, "hf:json", {...eventData, data})
-        } else if (contentType && contentType.indexOf("html") > -1) {
+            await publish($originator, "hf:json", {...eventData, data})
+        } else if (contentType?.includes("html")) {
             let text = await response.text()
-            htmlSwap({...eventData, text})
-        } else {
-            if (![204, 400].includes(response.status))
-                console.error(`Unhandled content type "${contentType}"`)
+            await publish($originator, "hf:swap", {...eventData, text})
+        } else if (response.status < 200 || response.status > 399) {
+            await publish($originator, "hf:responseError", eventData)
         }
 
         let maybeEvents = response.headers.get("hf-events")
         try {
             if (maybeEvents) {
                 let events = JSON.parse(maybeEvents)
-                for (let [eventName, detail] of Object.entries(events)) {
-                    publish($originator, eventName, detail)
-                }
+                await
+                    Promise.all(
+                        Object.entries(events)
+                        .map(([eventName, detail]) =>
+                            publish($originator, eventName, detail)))
             }
         } catch (ex) {
             console.error(ex, maybeEvents)
@@ -104,7 +119,7 @@ document.addEventListener("submit", async e => {
         if ($form instanceof HTMLFormElement) $form.submit()
     } finally {
         inFlight.delete($form)
-        publish($originator, "hf:completed", eventData)
+        await publish($originator, "hf:completed", eventData)
     }
 })
 
@@ -179,6 +194,9 @@ function htmlSwap({text, form, button}) {
     }
 
 }
+
+
+/** Recenter page depending on how updated data occurred. **/
 
 let pageLocation
 function beforeUnload() {

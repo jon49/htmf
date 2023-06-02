@@ -1,11 +1,23 @@
 (() => {
   self.hf = {};
-  hf.version = "0.11";
+  hf.version = "0.2";
   const has = (attribute) => (el) => el?.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
-  function publish(el, eventName, detail) {
-    return el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }));
+  async function publish(el, eventName, detail) {
+    if (!el.isConnected) {
+      el = document;
+    }
+    let result = el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }));
+    if (detail?.wait)
+      await detail.wait();
+    if (!result)
+      return Promise.reject();
+    return;
   }
+  document.addEventListener("hf:swap", async (e) => {
+    const { detail } = e;
+    htmlSwap(detail);
+  });
   document.addEventListener("submit", async (e) => {
     const $form = e instanceof HTMLFormElement ? e : e.target;
     let $button = document.activeElement;
@@ -18,7 +30,7 @@
     if (inFlight.get($form)) {
       return;
     } else {
-      inFlight.set($form, true);
+      inFlight.set($form, 1);
     }
     const method = $button?.formMethod || $form.method;
     const eventData = { form: $form, button: $button, method };
@@ -33,36 +45,37 @@
           url.searchParams.append(...e2);
         }
       }
+      eventData.xhr = { url, options };
+      await publish($originator, "hf:beforeRequest", eventData);
       const response = await fetch(url.href, options);
+      eventData.xhr.response = response;
+      await publish($originator, "hf:afterRequest", eventData);
       if (response.redirected) {
         location.href = response.url;
         return;
       }
       if (response.status === 205) {
         let url2 = response.headers.get("location");
-        if (publish($originator, "hf:reset-content", { ...eventData, url: url2 }) && url2) {
-          location.href = url2;
-        }
+        url2 && (location.href = url2);
         return;
       }
       const contentType = response.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") > -1) {
+      if (contentType?.includes("application/json")) {
         let data = JSON.parse(await response.json());
-        publish($originator, "hf:json", { ...eventData, data });
-      } else if (contentType && contentType.indexOf("html") > -1) {
+        await publish($originator, "hf:json", { ...eventData, data });
+      } else if (contentType?.includes("html")) {
         let text = await response.text();
-        htmlSwap({ ...eventData, text });
-      } else {
-        if (![204, 400].includes(response.status))
-          console.error(`Unhandled content type "${contentType}"`);
+        await publish($originator, "hf:swap", { ...eventData, text });
+      } else if (response.status < 200 || response.status > 399) {
+        await publish($originator, "hf:responseError", eventData);
       }
       let maybeEvents = response.headers.get("hf-events");
       try {
         if (maybeEvents) {
           let events = JSON.parse(maybeEvents);
-          for (let [eventName, detail] of Object.entries(events)) {
-            publish($originator, eventName, detail);
-          }
+          await Promise.all(
+            Object.entries(events).map(([eventName, detail]) => publish($originator, eventName, detail))
+          );
         }
       } catch (ex) {
         console.error(ex, maybeEvents);
@@ -73,7 +86,7 @@
         $form.submit();
     } finally {
       inFlight.delete($form);
-      publish($originator, "hf:completed", eventData);
+      await publish($originator, "hf:completed", eventData);
     }
   });
   function getAttribute(el, attributeName) {

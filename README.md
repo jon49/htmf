@@ -5,7 +5,7 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.54 kB minified and 1.42 kB minified and zipped.
+`htmf` is 2.9 kB minified and 1.6 kB minified and zipped.
 
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
@@ -32,10 +32,6 @@ submitting form.
 If you would like a form to not be controlled by `htmf` place the attribute
 `hf-ignore` on the form or on the submit button.
 
-If `application/json` is returned an event called `hf:json` will be
-dispatched the `detail` will contain the form which initiated the call, the
-parsed data, and the button which initiated the call.
-
 If you would like to dispatch a custom event send back the header `hf-events`
 with a JSON value with the name of the events as keys.
 
@@ -43,6 +39,15 @@ If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.20
+
+- Removed the 205 event in favor of more generalized events.
+- Added more similar events to what HTMX has but more limited.
+- Made events have the capability of being asynchronous. This allows for adding
+  classes.
+- Swap with event rather than directly calling it. This will allow for
+  extensions that add a class to the newly created HTML.
 
 ### 0.10
 
