@@ -91,7 +91,7 @@ export default function layout(todos: string) {
     </section>
     <footer class="info">
         <p>Double-click to edit a todo</p>
-        <p><a href="https://github.com/jon49/htmx-todomvc/">Source Code</a></p>
+        <p><a href="https://github.com/jon49/htmf/tree/master/src-todo">Source Code</a></p>
         <p>Created by <a href="https://jnyman.com">Jon Nyman</a></p>
         <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
     </footer>
