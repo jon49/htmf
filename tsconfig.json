@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "es2022",
+    "moduleResolution": "nodenext",
+    "lib": ["webworker", "ES2020", "ES2021", "DOM", "DOM.Iterable"],
+
+    "strict": true,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "allowJs": true,
+
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "outDir": "./public/"
+  },
+  "compileOnSave": true,
+  "include": ["src/**/*.ts", "src/**/*.js", "src/sw/js/lib/db.min.js", "src/sw/js/lib/chart.min.js", "src/web/js/lib/htmf.js"],
+  "exclude": [
+    "node_modules", "src/**/*spec.ts"
+  ]
+}
+
