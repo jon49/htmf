@@ -7,6 +7,8 @@ without JavaScript and the JS is just progressive enhancement.
 
 `htmf` is 2.9 kB minified and 1.6 kB minified and zipped.
 
+A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
+
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
 will be parsed back into the HTML. When the `htmf` library makes a call to
