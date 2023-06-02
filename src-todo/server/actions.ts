@@ -107,6 +107,7 @@ function todoView({completed, title, id}: Todo) {
                 class="edit"
                 value="${title}"
                 name="title"
+                autocomplete="off"
                 formaction="/?handler=update&id=${""+id}"
                 onblur="$(this).closest('li').removeClass('editing')"
                 onkeydown="event.keyCode === $.ESC_KEY && $(this).closest('li').removeClass('editing')"
