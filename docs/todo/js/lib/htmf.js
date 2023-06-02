@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   self.hf = {};
-  hf.version = "0.11";
+  hf.version = "0.2";
   const has = (attribute) => (el) => el?.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
   async function publish(el, eventName, detail) {
