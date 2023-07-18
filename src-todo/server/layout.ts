@@ -1,6 +1,6 @@
-import html from "html-template-tag"
+import html from "html-template-tag-stream"
 
-export default function layout(todos: string) {
+export default function layout(todos?: AsyncGenerator<any, void, unknown> | AsyncGenerator<any, void, unknown>[]) {
     // @ts-ignore
     return html`
 <!doctype html>
@@ -50,7 +50,7 @@ export default function layout(todos: string) {
                 <input id="toggle-all" class="toggle-all" type="checkbox">
                 <label for="toggle-all">Mark all as complete</label>
             </form>
-            <ul id="todo-list" class="todo-list">$${todos}</ul>
+            <ul id="todo-list" class="todo-list">${todos}</ul>
         </section>
         <!-- This footer should be hidden by default and shown when there are todos -->
         <footer

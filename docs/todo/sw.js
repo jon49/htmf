@@ -2,24 +2,63 @@ var __freeze = Object.freeze;
 var __defProp = Object.defineProperty;
 var __template = (cooked, raw) => __freeze(__defProp(cooked, "raw", { value: __freeze(raw || cooked.slice()) }));
 
-// node_modules/html-es6cape/dist/index.esm.js
-var t = { "&": "&amp;", ">": "&gt;", "<": "&lt;", '"': "&quot;", "'": "&#39;", "`": "&#96;" };
-var e = new RegExp(Object.keys(t).join("|"), "g");
-function n(n2) {
-  return void 0 === n2 && (n2 = ""), String(n2).replace(e, function(e3) {
-    return t[e3];
-  });
+// node_modules/html-template-tag-stream/lib/index.js
+var chars = {
+  "&": "&amp;",
+  ">": "&gt;",
+  "<": "&lt;",
+  '"': "&quot;",
+  "'": "&#39;",
+  "`": "&#96;"
+};
+var chars_default = chars;
+var re = new RegExp(Object.keys(chars_default).join("|"), "g");
+function escape(str = "") {
+  return String(str).replace(re, (match) => chars_default[match]);
 }
-
-// node_modules/html-template-tag/dist/index.esm.js
-function e2(e3) {
-  for (var a = [], t2 = 1; t2 < arguments.length; t2++)
-    a[t2 - 1] = arguments[t2];
-  return e3.raw.reduce(function(t3, n2, i) {
-    var o = a[i - 1];
-    return Array.isArray(o) ? o = o.join("") : e3.raw[i - 1] && e3.raw[i - 1].endsWith("$") ? t3 = t3.slice(0, -1) : o = n(o), t3 + o + n2;
-  });
+var html_es6cape_default = escape;
+var htmlPrototype = Object.getPrototypeOf(html);
+async function* typeChecker(sub, isRawHtml) {
+  const type = typeof sub, isPromise = sub instanceof Promise;
+  if (sub == null) {
+  } else if (type === "string") {
+    yield isRawHtml ? sub : html_es6cape_default(sub);
+  } else if (type === "number") {
+    yield "" + sub;
+  } else if (isPromise || sub instanceof Function) {
+    sub = isPromise ? await sub : sub();
+    for await (const s of typeChecker(sub, isRawHtml)) {
+      yield s;
+    }
+  } else if (Array.isArray(sub)) {
+    for await (const s of sub) {
+      for await (const x of typeChecker(s, true)) {
+        yield x;
+      }
+    }
+  } else if (sub.constructor === htmlPrototype) {
+    for await (const s of sub) {
+      yield s;
+    }
+  } else {
+    yield isRawHtml ? sub.toString() : html_es6cape_default(sub.toString());
+  }
 }
+async function* html(literals, ...subs) {
+  const lits = literals.raw, length = lits.length;
+  let isRawHtml = true;
+  for (let i = 0; i < length; i++) {
+    let lit = lits[i];
+    const sub = subs[i - 1];
+    for await (const s of typeChecker(sub, isRawHtml)) {
+      yield s;
+    }
+    lit = (isRawHtml = lit.endsWith("$")) ? lit.slice(0, -1) : lit;
+    if (lit)
+      yield lit;
+  }
+}
+var async_generator_html_default = html;
 
 // node_modules/idb-keyval/dist/index.js
 function promisifyRequest(request) {
@@ -63,7 +102,7 @@ function del(key, customStore = defaultGetStore()) {
 // src-todo/server/layout.ts
 var _a;
 function layout(todos) {
-  return e2(_a || (_a = __template([`
+  return async_generator_html_default(_a || (_a = __template([`
 <!doctype html>
 <html lang="en">
 <head>
@@ -111,7 +150,7 @@ function layout(todos) {
                 <input id="toggle-all" class="toggle-all" type="checkbox">
                 <label for="toggle-all">Mark all as complete</label>
             </form>
-            <ul id="todo-list" class="todo-list">$`, `</ul>
+            <ul id="todo-list" class="todo-list">`, `</ul>
         </section>
         <!-- This footer should be hidden by default and shown when there are todos -->
         <footer
@@ -168,10 +207,10 @@ function layout(todos) {
 var getAll = async () => {
   const todos = await get("todos") ?? [];
   if (todos.length === 0)
-    return layout("");
+    return layout();
   const todoData = await getMany(todos);
   const todoViews = todoData.map(todoView);
-  return layout(todoViews.join(""));
+  return layout(todoViews);
 };
 var createTodo = async ({ data }) => {
   if (data.title === "")
@@ -203,7 +242,7 @@ var deleteTodo = async ({ url }) => {
   const cleanedTodos = todos.filter((x) => x !== id);
   await set("todos", cleanedTodos);
   await del(id);
-  return "";
+  return null;
 };
 var toggleComplete = async ({ url }) => {
   const idMaybe = url.searchParams.get("id");
@@ -221,7 +260,7 @@ var toggleAll = async ({}) => {
   const completed = !todoData.every((x) => x.completed);
   const newData = todoData.map((x) => ({ ...x, completed }));
   await Promise.all(newData.map((x) => set(x.id, x)));
-  return newData.map(todoView).join("");
+  return async_generator_html_default`${newData.map(todoView)}`;
 };
 var clearCompleted = async ({}) => {
   const todos = await get("todos") ?? [];
@@ -229,32 +268,32 @@ var clearCompleted = async ({}) => {
   const completed = todoData.filter((x) => x.completed).map((x) => x.id);
   await Promise.all(completed.map((x) => del(x)));
   await set("todos", todos.filter((x) => !completed.includes(x)));
-  return todoData.filter((x) => !x.completed).map(todoView).join("");
+  return async_generator_html_default`${todoData.filter((x) => !x.completed).map(todoView)}`;
 };
 function todoView({ completed, title, id }) {
   let statusClass = completed ? ` class="completed"` : "";
   let idString = `row-${id}`;
-  return e2`
+  return async_generator_html_default`
     <li$${statusClass} id="$${idString}">
         <form method="post" target="#$${idString}" hf-swap="outerHTML">
             <input
                 class="toggle"
                 type="checkbox"
                 ${completed ? "checked" : ""}
-                formaction="/todos?handler=toggle-complete&id=${"" + id}"
+                formaction="/todos?handler=toggle-complete&id=${id}"
                 onchange="this.form.requestSubmit()"
                 >
             <label
                 class="view"
                 ondblclick="$(this).closest('li').addClass('editing').find('.edit').focus()"
                 >${title}</label>
-            <button class="destroy" formaction="/todos?handler=delete&id=${"" + id}"></button>
+            <button class="destroy" formaction="/todos?handler=delete&id=${id}"></button>
             <input
                 class="edit"
                 value="${title}"
                 name="title"
                 autocomplete="off"
-                formaction="/?handler=update&id=${"" + id}"
+                formaction="/?handler=update&id=${id}"
                 onblur="$(this).closest('li').removeClass('editing')"
                 onkeydown="event.keyCode === $.ESC_KEY && $(this).closest('li').removeClass('editing')"
                 >
@@ -265,9 +304,9 @@ function todoView({ completed, title, id }) {
 // src-todo/sw.ts
 var version = "0.0.1";
 var root = self.location.pathname.replace("/sw.js", "");
-self.addEventListener("install", (e3) => {
+self.addEventListener("install", (e) => {
   console.log(`Installing version '${version}' service worker.`);
-  e3.waitUntil(
+  e.waitUntil(
     caches.open(version).then((cache) => cache.addAll([
       "/js/app.js",
       "/js/sw-loader.js",
@@ -278,39 +317,51 @@ self.addEventListener("install", (e3) => {
     ].map((x) => root + x)))
   );
 });
-self.addEventListener("fetch", (e3) => e3.respondWith(getResponse(e3)));
-self.addEventListener("activate", async (e3) => {
+self.addEventListener("fetch", (e) => e.respondWith(getResponse(e)));
+self.addEventListener("activate", async (e) => {
   console.log(`Service worker activated. Cache version '${version}'.`);
   const keys = await caches.keys();
-  if (e3.waitUntil) {
+  if (e.waitUntil) {
     let cacheDeletes = keys.map((x) => version !== x && caches.delete(x)).filter((x) => x);
     if (cacheDeletes.length === 0)
       return;
-    e3.waitUntil(Promise.all(cacheDeletes));
+    e.waitUntil(Promise.all(cacheDeletes));
   }
 });
-async function getResponse(e3) {
-  const url = new URL(e3.request.url);
+async function getResponse(e) {
+  const url = new URL(e.request.url);
   console.log(`Fetching '${url.pathname}'`);
-  if (url.pathname === root + "/" && e3.request.method === "GET") {
+  if (url.pathname === root + "/" && e.request.method === "GET") {
     const index = await getAll();
-    return new Response(index, {
-      headers: {
-        "Content-Type": "text/html",
-        "hf-events": `{"todos-updated": ""}`
-      }
-    });
+    return streamResponse(index);
   }
   const handler = url.searchParams.get("handler");
   if (handler) {
-    return handle(handler, e3.request, url);
+    return handle(handler, e.request, url);
   }
   return caches.match(url.pathname);
+}
+var encoder = new TextEncoder();
+function streamResponse(generator) {
+  const stream = new ReadableStream({
+    async start(controller) {
+      for await (let s of generator) {
+        controller.enqueue(encoder.encode(s));
+      }
+      controller.close();
+    }
+  });
+  return new Response(
+    stream,
+    {
+      headers: { "content-type": "text/html; charset=utf-8", "hf-events": `{"todos-updated": ""}` }
+    }
+  );
 }
 async function handle(handler, request, url) {
   const data = await getData(request, url);
   const opt = { request, url, data };
-  let task = null;
+  let task = Promise.resolve(null);
   switch (handler) {
     case "create":
       task = createTodo(opt);
@@ -336,13 +387,7 @@ async function handle(handler, request, url) {
   const result = await task;
   if (result == null)
     return new Response(null, { status: 204 });
-  return new Response(result, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/html",
-      "hf-events": `{"todos-updated": ""}`
-    }
-  });
+  return streamResponse(result);
 }
 async function getData(req, url) {
   let o = {};
