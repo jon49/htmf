@@ -1,6 +1,6 @@
 import html from "html-template-tag-stream"
 
-export default function layout(todos?: AsyncGenerator<any, void, unknown> | AsyncGenerator<any, void, unknown>[]) {
+export default function layout(count: number, enableJS: boolean, todos?: AsyncGenerator<any, void, unknown> | AsyncGenerator<any, void, unknown>[]) {
     // @ts-ignore
     return html`
 <!doctype html>
@@ -19,16 +19,16 @@ export default function layout(todos?: AsyncGenerator<any, void, unknown> | Asyn
         <header class="header">
             <h1>todos</h1>
             <form
-                target="#todo-list"
                 method="post"
                 action="/todos?handler=create"
-                hf-swap="append"
+                hf-target="#todo-list"
+                hf-swap="beforeend"
                 >
             <input
                 id="new-todo"
                 class="new-todo"
                 placeholder="What needs to be done?"
-                autofocus
+                ${ count === 0 ? 'autofocus' : null }
                 autocomplete="off"
                 name="title"
                 x-subscribe="todos-updated: this.value = ''; app.getTotalTodos() === 0 && this.focus()"
@@ -44,7 +44,7 @@ export default function layout(todos?: AsyncGenerator<any, void, unknown> | Asyn
             <form
                 method="post"
                 action="/todos?handler=toggle-all"
-                target="#todo-list"
+                hf-target="#todo-list"
                 onchange="this.requestSubmit()"
                 >
                 <input id="toggle-all" class="toggle-all" type="checkbox">
@@ -79,7 +79,7 @@ export default function layout(todos?: AsyncGenerator<any, void, unknown> | Asyn
             <form
                 method="post"
                 action="/todos?handler=clear-completed"
-                target="#todo-list"
+                hf-target="#todo-list"
                 >
                 <button
                     id="clear-completed"
@@ -91,14 +91,14 @@ export default function layout(todos?: AsyncGenerator<any, void, unknown> | Asyn
     </section>
     <footer class="info">
         <p>Double-click to edit a todo</p>
+        <p><form method=post action="?handler=toggle-js"><button>${enableJS ? "Disable JS" : "Enable JS"}</button></form></p>
         <p><a href="https://github.com/jon49/htmf/tree/master/src-todo">Source Code</a></p>
         <p>Created by <a href="https://jnyman.com">Jon Nyman</a></p>
         <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
     </footer>
     <!-- Scripts here. Don't remove ↓ -->
-    <script src="./js/sw-loader.js"></script>
     <script src="./js/app.js"></script>
-    <script src="./js/lib/htmf.js"></script>
+    ${ enableJS ? html`<script src="./js/lib/htmf.js"></script>` : null }
 </body>
 </html>`
 }

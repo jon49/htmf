@@ -100,9 +100,9 @@ function del(key, customStore = defaultGetStore()) {
 }
 
 // src-todo/server/layout.ts
-var _a;
-function layout(todos) {
-  return async_generator_html_default(_a || (_a = __template([`
+var _a, _b;
+function layout(count, enableJS, todos) {
+  return async_generator_html_default(_b || (_b = __template([`
 <!doctype html>
 <html lang="en">
 <head>
@@ -119,16 +119,16 @@ function layout(todos) {
         <header class="header">
             <h1>todos</h1>
             <form
-                target="#todo-list"
                 method="post"
                 action="/todos?handler=create"
-                hf-swap="append"
+                hf-target="#todo-list"
+                hf-swap="beforeend"
                 >
             <input
                 id="new-todo"
                 class="new-todo"
                 placeholder="What needs to be done?"
-                autofocus
+                `, `
                 autocomplete="off"
                 name="title"
                 x-subscribe="todos-updated: this.value = ''; app.getTotalTodos() === 0 && this.focus()"
@@ -144,7 +144,7 @@ function layout(todos) {
             <form
                 method="post"
                 action="/todos?handler=toggle-all"
-                target="#todo-list"
+                hf-target="#todo-list"
                 onchange="this.requestSubmit()"
                 >
                 <input id="toggle-all" class="toggle-all" type="checkbox">
@@ -179,7 +179,7 @@ function layout(todos) {
             <form
                 method="post"
                 action="/todos?handler=clear-completed"
-                target="#todo-list"
+                hf-target="#todo-list"
                 >
                 <button
                     id="clear-completed"
@@ -191,27 +191,40 @@ function layout(todos) {
     </section>
     <footer class="info">
         <p>Double-click to edit a todo</p>
+        <p><form method=post action="?handler=toggle-js"><button>`, `</button></form></p>
         <p><a href="https://github.com/jon49/htmf/tree/master/src-todo">Source Code</a></p>
         <p>Created by <a href="https://jnyman.com">Jon Nyman</a></p>
         <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
     </footer>
     <!-- Scripts here. Don't remove \u2193 -->
-    <script src="./js/sw-loader.js"><\/script>
     <script src="./js/app.js"><\/script>
-    <script src="./js/lib/htmf.js"><\/script>
-</body>
-</html>`])), todos);
+    `, "\n</body>\n</html>"])), count === 0 ? "autofocus" : null, todos, enableJS ? "Disable JS" : "Enable JS", enableJS ? async_generator_html_default(_a || (_a = __template(['<script src="./js/lib/htmf.js"><\/script>']))) : null);
 }
 
 // src-todo/server/actions.ts
 var getAll = async () => {
-  const todos = await get("todos") ?? [];
-  if (todos.length === 0)
-    return layout();
-  const todoData = await getMany(todos);
-  const todoViews = todoData.map(todoView);
-  return layout(todoViews);
+  let [todos, { enableJS }] = await Promise.all([getTodos(), getSettings()]);
+  let count = todos.length;
+  if (count === 0)
+    return layout(0, enableJS);
+  const todoViews = todos.map(todoView);
+  return layout(count, enableJS, todoViews);
 };
+async function getSettings() {
+  const settings = await get("settings") ?? { enableJS: true };
+  return settings;
+}
+async function getTodoIds() {
+  const todos = await get("todos") ?? [];
+  return todos;
+}
+async function getTodos() {
+  const todos = await getTodoIds();
+  if (todos.length === 0)
+    return [];
+  const todoData = await getMany(todos);
+  return todoData;
+}
 var createTodo = async ({ data }) => {
   if (data.title === "")
     return null;
@@ -231,7 +244,7 @@ var updateTodo = async ({ url, data }) => {
   const oldData = await get(id);
   const combinedData = { ...oldData, ...data };
   await set(id, combinedData);
-  return todoView(combinedData);
+  return todoItem(combinedData.title, combinedData.id);
 };
 var deleteTodo = async ({ url }) => {
   const todos = await get("todos") ?? [];
@@ -270,39 +283,51 @@ var clearCompleted = async ({}) => {
   await set("todos", todos.filter((x) => !completed.includes(x)));
   return async_generator_html_default`${todoData.filter((x) => !x.completed).map(todoView)}`;
 };
+var toggleJS = async () => {
+  const settings = await getSettings();
+  settings.enableJS = !settings.enableJS;
+  await set("settings", settings);
+};
 function todoView({ completed, title, id }) {
-  let statusClass = completed ? ` class="completed"` : "";
-  let idString = `row-${id}`;
+  let completedClass = completed ? "completed" : "";
+  let liClass = `class="${completedClass}"`;
   return async_generator_html_default`
-    <li$${statusClass} id="$${idString}">
-        <form method="post" target="#$${idString}" hf-swap="outerHTML">
-            <input
-                class="toggle"
+    <li id="row-${id}" $${liClass}>
+        <form method="post"
+              action="?handler=toggle-complete&id=${id}"
+              hf-target="#row-${id}"
+              hf-swap="outerHTML">
+            <button
+                id="toggle_${"" + id}"
+                class="toggle button-toggle"
                 type="checkbox"
-                ${completed ? "checked" : ""}
-                formaction="/todos?handler=toggle-complete&id=${id}"
-                onchange="this.form.requestSubmit()"
-                >
-            <label
-                class="view"
-                ondblclick="$(this).closest('li').addClass('editing').find('.edit').focus()"
-                >${title}</label>
-            <button class="destroy" formaction="/todos?handler=delete&id=${id}"></button>
-            <input
-                class="edit"
-                value="${title}"
-                name="title"
-                autocomplete="off"
-                formaction="/?handler=update&id=${id}"
-                onblur="$(this).closest('li').removeClass('editing')"
-                onkeydown="event.keyCode === $.ESC_KEY && $(this).closest('li').removeClass('editing')"
-                >
+            >$${completed ? "&#10004;" : ""}</button>
         </form>
+        <form method="post">${todoItem(title, id)}</form>
     </li>`;
+}
+function todoItem(title, id) {
+  return async_generator_html_default`
+<div>
+    <input
+        id="edit_${id}"
+        class="edit"
+        value="${title}"
+        name="title"
+        autocomplete="off" >
+    <label for="edit_${id}" class="view">${title} &#9998;</label>
+    <button hidden formaction="?handler=update&id=${id}"></button>
+</div>
+<button
+    class="destroy"
+    formaction="?handler=delete&id=${id}"
+    hf-target="#row-${id}"
+    hf-swap="outerHTML"
+    ></button>`;
 }
 
 // src-todo/sw.ts
-var version = "0.0.1";
+var version = "2";
 var root = self.location.pathname.replace("/sw.js", "");
 self.addEventListener("install", (e) => {
   console.log(`Installing version '${version}' service worker.`);
@@ -359,9 +384,10 @@ function streamResponse(generator) {
   );
 }
 async function handle(handler, request, url) {
+  let { enableJS } = await getSettings();
   const data = await getData(request, url);
   const opt = { request, url, data };
-  let task = Promise.resolve(null);
+  let task;
   switch (handler) {
     case "create":
       task = createTodo(opt);
@@ -381,12 +407,22 @@ async function handle(handler, request, url) {
     case "clear-completed":
       task = clearCompleted(opt);
       break;
+    case "toggle-js":
+      task = toggleJS(opt);
+      break;
     default:
       return new Response("Unknown handler", { status: 400 });
   }
   const result = await task;
-  if (result == null)
-    return new Response(null, { status: 204 });
+  if (result === void 0 || !enableJS)
+    return new Response(null, { status: 302, headers: { location: "/" } });
+  if (result === null)
+    return new Response("", {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "hf-events": `{"todos-updated": ""}`
+      }
+    });
   return streamResponse(result);
 }
 async function getData(req, url) {

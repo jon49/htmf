@@ -6,9 +6,12 @@ import {
     toggleAll,
     toggleComplete,
     updateTodo,
+    toggleJS,
+    Handler,
+    getSettings,
 } from "./server/actions.js"
 
-const version = "0.0.1"
+const version = "2"
 const root = self.location.pathname.replace('/sw.js', '')
 
 self.addEventListener("install", e => {
@@ -79,9 +82,10 @@ function streamResponse(generator: AsyncGenerator<any, void, unknown>) {
 }
 
 async function handle(handler: string, request: Request, url: URL) {
+    let { enableJS } = await getSettings()
     const data = await getData(request, url)
     const opt = { request, url, data }
-    let task : Promise<AsyncGenerator<any, void, unknown> | AsyncGenerator<any, void, unknown>[] | null> = Promise.resolve(null)
+    let task : ReturnType<Handler>
     switch (handler) {
         case "create":
             task = createTodo(opt)
@@ -101,12 +105,23 @@ async function handle(handler: string, request: Request, url: URL) {
         case "clear-completed":
             task = clearCompleted(opt)
             break
+        case "toggle-js":
+            task = toggleJS(opt)
+            break
         default:
             return new Response("Unknown handler", { status: 400 })
     }
 
     const result = await task
-    if (result == null) return new Response(null, { status: 204 })
+    if (result === undefined || !enableJS) return new Response(null, { status: 302, headers: { location: "/" } })
+    if (result === null)
+        return new Response("", {
+            headers: {
+                "content-type": "text/html; charset=utf-8",
+                "hf-events": `{"todos-updated": ""}`
+            }
+        })
+            
     // @ts-ignore
     return streamResponse(result)
 }

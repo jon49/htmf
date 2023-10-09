@@ -5,7 +5,7 @@
 minimal API. It also makes it easy to build Multipage apps (MPA) which works
 without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.9 kB minified and 1.6 kB minified and zipped.
+`htmf` is 2.9 kB minified and 1.7 kB minified and zipped.
 
 A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
 
@@ -14,22 +14,19 @@ normal paths `htmf` will take over the call and the partial HTML returned
 will be parsed back into the HTML. When the `htmf` library makes a call to
 the back end it will add the header `HF-Request: true` to the HTTP call.
 
-Use `target` in the calling form or button to decide where the returning `HTML`
+Use `hf-target` in the calling form or button to decide where the returning `HTML`
 will be placed. Defaults to the form itself.
 
-`target` defaults to a swap of `innerHTML`.
+`hf-target` defaults to a swap of `innerHTML`.
 
 If you don't want it to replace the contents you can add the attribute
-`hf-swap` with types `append`, `prepend`, `outerHTML` (replace), and `oob` for
-out-of-bound replacements (matches on the IDs of the elements).
+`hf-swap` with types `outerHTML`, `innerHTML`, `beforebegin`, `afterbegin`,
+`beforeend`, `afterend`, `append`, `prepend`, `outerHTML` (replace), and `oob`
+for out-of-bound replacements (matches on the IDs of the elements).
 
-After a swap it will search for `autofocus` attribute and focus on that
-element.
-
-If `autofocus` isn't found it will try to scroll to the previous position. This
-is great for when appending above the `input` element. You can opt out of this
-behavior by attaching `hf-ignore-scroll` to the submitting button or to the
-submitting form.
+It will attempt to keep the focus on the previously focused element and try to
+maintain the current scroll position similar to `mpa-enhancer`. You can opt out
+of this behavior with `hf-ignore-scroll`.
 
 If you would like a form to not be controlled by `htmf` place the attribute
 `hf-ignore` on the form or on the submit button.
@@ -41,6 +38,18 @@ If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.30
+
+Basically a rewrite.
+
+- Improved scrolling.
+- Use `hf-target` instead of `target`.
+- Added more `hf-swap` types similar to `HTMX` which works with
+  `insertAdjacentHTML`.
+- Use `submitter` instead of `activeElement` to determine override of form
+  values.
+- 204 response is now ignored
 
 ### 0.20
 

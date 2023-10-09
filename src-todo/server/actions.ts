@@ -8,15 +8,44 @@ interface RequestOptions {
     url: URL
     data: any
 }
-type Handler = (o: RequestOptions) => Promise<AsyncGenerator<any, void, unknown> | AsyncGenerator<any, void, unknown>[] | null>
+export type Handler =
+    (o: RequestOptions) => Promise<AsyncGenerator<any, void, unknown> | AsyncGenerator<any, void, unknown>[] | null | undefined>
+
+interface Settings {
+    enableJS: boolean
+}
+
+interface Todo {
+    completed: boolean
+    title: string
+    id: number
+}
 
 export const getAll = async () => {
-    const todos : number[] = (await get("todos")) ?? []
-    if (todos.length === 0) return layout()
-    const todoData = await getMany(todos)
-    const todoViews = todoData.map(todoView)
-    return layout(todoViews)
+    let [ todos, { enableJS } ] = await Promise.all([getTodos(), getSettings()])
+    let count = todos.length
+    if (count === 0) return layout(0, enableJS)
+    const todoViews = todos.map(todoView)
+    return layout(count, enableJS, todoViews)
 }
+
+export async function getSettings() {
+    const settings : Settings = (await get("settings")) ?? { enableJS: true }
+    return settings
+}
+
+async function getTodoIds() {
+    const todos : number[] = (await get("todos")) ?? []
+    return todos
+}
+
+async function getTodos() {
+    const todos : number[] = await getTodoIds()
+    if (todos.length === 0) return []
+    const todoData : Todo[] = await getMany(todos)
+    return todoData
+}
+
 
 export const createTodo : Handler = async({ data }) => {
     if (data.title === "") return null
@@ -36,7 +65,7 @@ export const updateTodo : Handler = async ({ url, data }) => {
     const oldData = await get(id)
     const combinedData = { ...oldData, ...data }
     await set(id, combinedData)
-    return todoView(combinedData)
+    return todoItem(combinedData.title, combinedData.id)
 }
 
 export const deleteTodo : Handler = async ({ url }) => {
@@ -78,41 +107,49 @@ export const clearCompleted : Handler = async ({ }) => {
     return html`${todoData.filter(x => !x.completed).map(todoView)}`
 }
 
-interface Todo {
-    completed: boolean
-    title: string
-    id: number
+export const toggleJS : Handler = async () => {
+    const settings = await getSettings()
+    settings.enableJS = !settings.enableJS
+    await set("settings", settings)
 }
 
-function todoView({completed, title, id}: Todo) {
-    let statusClass = completed ? ` class="completed"` : ""
-    let idString = `row-${id}`
+function todoView({ completed, title, id }: Todo) {
+    let completedClass = completed ? "completed" : ""
+    let liClass = `class="${completedClass}"`
     // @ts-ignore
     return html`
-    <li$${statusClass} id="$${idString}">
-        <form method="post" target="#$${idString}" hf-swap="outerHTML">
-            <input
-                class="toggle"
+    <li id="row-${id}" $${liClass}>
+        <form method="post"
+              action="?handler=toggle-complete&id=${id}"
+              hf-target="#row-${id}"
+              hf-swap="outerHTML">
+            <button
+                id="toggle_${"" + id}"
+                class="toggle button-toggle"
                 type="checkbox"
-                ${completed ? "checked" : ""}
-                formaction="/todos?handler=toggle-complete&id=${id}"
-                onchange="this.form.requestSubmit()"
-                >
-            <label
-                class="view"
-                ondblclick="$(this).closest('li').addClass('editing').find('.edit').focus()"
-                >${title}</label>
-            <button class="destroy" formaction="/todos?handler=delete&id=${id}"></button>
-            <input
-                class="edit"
-                value="${title}"
-                name="title"
-                autocomplete="off"
-                formaction="/?handler=update&id=${id}"
-                onblur="$(this).closest('li').removeClass('editing')"
-                onkeydown="event.keyCode === $.ESC_KEY && $(this).closest('li').removeClass('editing')"
-                >
+            >$${completed ? "&#10004;" : ""}</button>
         </form>
+        <form method="post">${todoItem(title, id)}</form>
     </li>`
+}
+
+function todoItem(title: string, id: number) {
+    return html`
+<div>
+    <input
+        id="edit_${id}"
+        class="edit"
+        value="${title}"
+        name="title"
+        autocomplete="off" >
+    <label for="edit_${id}" class="view">${title} &#9998;</label>
+    <button hidden formaction="?handler=update&id=${id}"></button>
+</div>
+<button
+    class="destroy"
+    formaction="?handler=delete&id=${id}"
+    hf-target="#row-${id}"
+    hf-swap="outerHTML"
+    ></button>`
 }
 
