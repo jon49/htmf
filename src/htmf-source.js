@@ -237,11 +237,6 @@ function onLoad() {
         run('select', $q)
         $q.scrollTo({ top: y, behavior: 'smooth' })
     }
-    // if (y) {
-    //     let scrollToY = y + doc.body.scrollHeight - height
-    //     if (scrollToY !== y)
-    //         w.scrollTo({ top: scrollToY, behavior: 'smooth' })
-    // }
 }
 
 /**
