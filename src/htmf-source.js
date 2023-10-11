@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.2"
+hf.version = "0.3.1"
 
 const hasAttr =
     (/** @type {string} */ attribute) =>
@@ -91,21 +91,18 @@ doc.addEventListener("submit", async e => {
             location.href = response.url
             return
         }
-        if (response.status === 204) {
-            return
-        }
         if (response.status === 205) {
             let url = response.headers.get("location")
             url && (location.href = url)
             return
         }
 
-        const contentType = response.headers.get("content-type")
-
-        if (contentType?.includes("application/json")) {
+        const contentType = response.headers.get("content-type"),
+            hasContent = response.status !== 204
+        if (hasContent && contentType?.includes("application/json")) {
             let data = JSON.parse(await response.json())
             await publish($originator, "hf:json", {...eventData, data})
-        } else if (contentType?.includes("html")) {
+        } else if (hasContent && contentType?.includes("html")) {
             let text = await response.text()
             await publish($originator, "hf:swap", {...eventData, text})
         } else if (response.status < 200 || response.status > 399) {
