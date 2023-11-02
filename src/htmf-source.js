@@ -2,7 +2,7 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.3.1"
+hf.version = "0.4.0"
 
 const hasAttr =
     (/** @type {string} */ attribute) =>
@@ -157,7 +157,7 @@ function getHtml(text) {
 function htmlSwap({text, form, submitter, active}) {
     if (text == null) return
 
-    beforeUnload(active)
+    beforeUnload(active, submitter, form)
 
     let target = getAttribute(submitter, "hf-target") ?? getAttribute(form, "hf-target")
     let swap = getAttribute(submitter, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML"
@@ -208,26 +208,33 @@ function htmlSwap({text, form, submitter, active}) {
 
 /** Recenter page depending on how updated data occurred. **/
 
-/** @type {{ y: number | undefined, q: string | undefined, height: number } | undefined} */
+/** @type {{ target: string | undefined | null, y: number | undefined, q: string | undefined, height: number } | undefined} */
 let pageLocation
 /**
 * @param {Element | null} active
+* @param {HTMLButtonElement | HTMLInputElement | undefined} submitter
+* @param {HTMLFormElement} form
 * @returns {void}
 * */
-function beforeUnload(active) {
+function beforeUnload(active, submitter, form) {
     // @ts-ignore
     let name = active?.name,
         id = active?.id
     pageLocation = {
         y: calculateY(active),
         q: (id && `#${id}`) || (name && `[name="${name}"]`),
+        target: getAttribute([submitter, form].find(hasAttr("hf-scroll")), "hf-scroll"),
         height: doc.body.scrollHeight
     }
 }
 
 function onLoad() {
     if (!pageLocation) return
-    let { y, q /*, height */ } = pageLocation
+    let { target, y, q /*, height */ } = pageLocation
+    let $target = target && query(target)
+    if ($target) {
+        return $target.scrollIntoView({ behavior: 'smooth' })
+    }
     let $q = q && query(q)
     if ($q) {
         run('focus', $q)
@@ -252,4 +259,5 @@ function run(method, el) {
     // @ts-ignore
     el && el[method] && el[method]()
 }
+
 

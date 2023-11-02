@@ -39,7 +39,11 @@ library instant.page.
 
 ## Version
 
-### 0.30
+### 0.4.0
+
+Add ability to scroll target a location on a page after swapping in new HTML.
+
+### 0.3.0
 
 Basically a rewrite.
 
