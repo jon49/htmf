@@ -3,7 +3,7 @@
     "type": "module",
     "name": "htmf",
     "description": "HTMF a library for RESTful web development.",
-    "version": "0.0.1",
+    "version": "0.5.0",
     "scripts": {
         "start": "npm run clean && npm run make-dirs && npm run static && esbuild --format=esm --watch --outdir=docs/todo --bundle --servedir=docs/todo ./src-todo/sw.ts",
         "static": "cd ./src-todo/ && cp --parents `find . -name '*.js' -o -name '*.html' -o -name '*.css'` ../docs/todo && cd .. && npm run htmf && npm run todo && npm run app",

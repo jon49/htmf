@@ -9,6 +9,8 @@ without JavaScript and the JS is just progressive enhancement.
 
 A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
 
+## Core functionality
+
 Use forms just like you normally would, but instead of calling through the
 normal paths `htmf` will take over the call and the partial HTML returned
 will be parsed back into the HTML. When the `htmf` library makes a call to
@@ -24,20 +26,40 @@ If you don't want it to replace the contents you can add the attribute
 `beforeend`, `afterend`, `append`, `prepend`, `outerHTML` (replace), and `oob`
 for out-of-bound replacements (matches on the IDs of the elements).
 
-It will attempt to keep the focus on the previously focused element and try to
-maintain the current scroll position similar to `mpa-enhancer`. You can opt out
-of this behavior with `hf-ignore-scroll`.
-
 If you would like a form to not be controlled by `htmf` place the attribute
 `hf-ignore` on the form or on the submit button.
 
 If you would like to dispatch a custom event send back the header `hf-events`
 with a JSON value with the name of the events as keys.
 
+## Auto scrolling and focusing
+
+HTMF will automatically keep the active element in focus and at the same
+scrolling location after an HTMF swap. These extra scrolling attributes will
+help you fine tune any changes you would like.
+
+`hf-scroll-to`: After load scroll to specified queried element.
+
+`hf-scroll-target`: Target a different element than the default one.
+
+`hf-scroll-miss`: If the target scroll element is missing use the
+`hf-scroll-miss` defined query instead.
+
+`hf-skip-focus`: Don't focus on element.
+
+`hf-skip-scroll`: Don't autoscroll to element.
+
+## Snappy pages
+
 If you would like your app to be a bit snappier consider using the JavaScript
 library instant.page.
 
 ## Version
+
+### 0.5.0
+
+Improved scrolling experience. Made it more like
+[mpa-enhancer](https://github.com/jon49/mpa-enhancer).
 
 ### 0.4.0
 

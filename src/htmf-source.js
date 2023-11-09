@@ -2,15 +2,15 @@
 
 // @ts-ignore
 self.hf = {}
-hf.version = "0.4.0"
+hf.version = "0.5.0"
 
 const hasAttr =
     (/** @type {string} */ attribute) =>
-    (/** @type {{ hasAttribute: (arg0: string) => any; }|undefined} */ el) =>
+    (/** @type {Element | undefined | null} */ el) =>
         el?.hasAttribute(attribute)
 
 let doc = document,
-    //w = window,
+    w = window,
     query = doc.querySelector.bind(doc)
 
 const inFlight = new WeakMap
@@ -132,7 +132,7 @@ doc.addEventListener("submit", async e => {
 })
 
 /**
- * @param {HTMLElement | undefined} el 
+ * @param {Element | undefined | null} el 
  * @param {string} attributeName 
  * @returns {string | null | undefined}
  */
@@ -154,10 +154,10 @@ function getHtml(text) {
  * @param {{ text: string|undefined, form: HTMLFormElement, active: Element | null, submitter: HTMLButtonElement | HTMLInputElement | undefined }} data 
  * @returns 
  */
-function htmlSwap({text, form, submitter, active}) {
+function htmlSwap({text, form, submitter}) {
     if (text == null) return
 
-    beforeUnload(active, submitter, form)
+    beforeUnload(submitter, form)
 
     let target = getAttribute(submitter, "hf-target") ?? getAttribute(form, "hf-target")
     let swap = getAttribute(submitter, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML"
@@ -205,41 +205,88 @@ function htmlSwap({text, form, submitter, active}) {
 
 }
 
-
 /** Recenter page depending on how updated data occurred. **/
 
-/** @type {{ target: string | undefined | null, y: number | undefined, q: string | undefined, height: number } | undefined} */
-let pageLocation
+/** @type {Element | null} */
+let lastClick = null
+w.addEventListener('click', e => {
+    if (e.target instanceof Element) {
+        lastClick = e.target
+    }
+})
+
 /**
-* @param {Element | null} active
+* @typedef {{ y: number | undefined, q: string | null | undefined }} ScrollTarget
+**/
+
+/** @type {{ y: number | undefined, to: string | undefined | null, a: { t: ScrollTarget, m: ScrollTarget } }} | undefined} */
+let pageLocation
+
+/**
 * @param {HTMLButtonElement | HTMLInputElement | undefined} submitter
 * @param {HTMLFormElement} form
 * @returns {void}
 * */
-function beforeUnload(active, submitter, form) {
-    // @ts-ignore
-    let name = active?.name,
-        id = active?.id
+function beforeUnload(submitter, form) {
+    let active = doc.activeElement
+    let target = active === doc.body ? lastClick : active
+    let to = getAttribute([submitter, form].find(hasAttr("hf-scroll-to")), "hf-scroll-to")
+    let scrollTarget = getAttribute(target, 'hf-scroll-target')
+    if (scrollTarget) {
+        target = query(scrollTarget)
+    }
+    let miss = getAttribute(target?.closest('[hf-scroll-miss]'), 'hf-scroll-miss')
+    let name = getAttribute(target, "name")
     pageLocation = {
-        y: calculateY(active),
-        q: (id && `#${id}`) || (name && `[name="${name}"]`),
-        target: getAttribute([submitter, form].find(hasAttr("hf-scroll")), "hf-scroll"),
-        height: doc.body.scrollHeight
+        y: w.scrollY,
+        to,
+        // active
+        a: {
+            // target
+            t: { y: calculateY(target), q: (target?.id && `#${target.id}`) || (name && `[name="${name}"]`) },
+            // miss
+            // @ts-ignore
+            m: { y: calculateY(query(miss)), q: miss }
+        }
     }
 }
 
 function onLoad() {
     if (!pageLocation) return
-    let { target, y, q /*, height */ } = pageLocation
-    let $target = target && query(target)
-    if ($target) {
-        return $target.scrollIntoView({ behavior: 'smooth' })
+    let { y, to, a: { t, m } } = pageLocation
+    if (to) {
+        let $scrollTo = query(to)
+        if ($scrollTo) {
+            return $scrollTo.scrollIntoView({ behavior: 'smooth' })
+        }
     }
-    let $q = q && query(q)
-    if ($q) {
-        run('focus', $q)
-        run('select', $q)
-        $q.scrollTo({ top: y, behavior: 'smooth' })
+
+    let active
+    let elY =
+        (t.q && (active = query(t.q)))
+            ?  t.y
+        : (m.q && (active = query(m.q)))
+            ?  m.y
+        : 0
+    if (!hasAttr('hf-skip-focus')(active)) {
+        run('focus', active)
+        run('select', active)
+    }
+
+    if (!hasAttr('hf-skip-scroll')(doc.body)) {
+        if (active && elY) {
+            // Scroll to where element was before
+            w.scrollTo({
+                top:
+                    w.scrollY
+                    // @ts-ignore
+                    + calculateY(active)
+                    - elY
+            })
+        } else {
+            // Scroll to where page was before
+            w.scrollTo({ top: y })
+        }
     }
 }
 
@@ -253,7 +300,7 @@ function calculateY(el) {
 
 /**
 * @param {string} method
-* @param {Element} el
+* @param {Element | undefined | null} el
 * */
 function run(method, el) {
     // @ts-ignore
