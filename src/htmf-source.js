@@ -1,12 +1,9 @@
-// @ts-check
-
-// @ts-ignore
 self.hf = {}
-hf.version = "0.5.0"
+hf.version = "0.6.0"
 
 const hasAttr =
     (/** @type {string} */ attribute) =>
-    (/** @type {Element | undefined | null} */ el) =>
+    (/** @type {{ hasAttribute: (arg0: string) => any; }|undefined} */ el) =>
         el?.hasAttribute(attribute)
 
 let doc = document,
@@ -31,6 +28,11 @@ async function publish(el, eventName, detail) {
     if (!result) return Promise.reject()
     return
 }
+
+/**
+* @type {Function[]}
+* */
+const publishAfter = []
 
 doc.addEventListener("hf:swap", async e => {
     /** @type {{ detail: { text: string|undefined, form: HTMLFormElement, button: HTMLButtonElement | HTMLInputElement | undefined }}} */
@@ -69,7 +71,18 @@ doc.addEventListener("submit", async e => {
 
     try {
         const preData = new FormData(form)
-        const url = new URL((hasAttr("formAction")(submitter) && submitter?.formAction) || form.action)
+        let pathname
+        if (pathname = getAttribute(submitter, "formaction")) {
+        } else {
+            pathname = getAttribute(form, "action")
+        }
+        pathname = pathname ?? location.pathname
+        // @ts-ignore
+        let url =
+            pathname.startsWith("?")
+                ? new URL(pathname, form.baseURI)
+            : new URL(pathname, location.origin)
+
         const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) }
         if (method === "post") {
             // @ts-ignore
@@ -128,11 +141,15 @@ doc.addEventListener("submit", async e => {
     } finally {
         inFlight.delete(form)
         await publish($originator, "hf:completed", eventData)
+        setTimeout(() => {
+            publishAfter.map(p => p())
+            publishAfter.length = 0
+        }, 10)
     }
 })
 
 /**
- * @param {Element | undefined | null} el 
+ * @param {Element | HTMLElement | undefined |  null} el 
  * @param {string} attributeName 
  * @returns {string | null | undefined}
  */
@@ -161,18 +178,25 @@ function htmlSwap({text, form, submitter}) {
 
     let target = getAttribute(submitter, "hf-target") ?? getAttribute(form, "hf-target")
     let swap = getAttribute(submitter, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML"
+    let select = getAttribute(submitter, "hf-select") ?? getAttribute(form, "hf-select")
+    if (select) {
+        swap = "select"
+    }
 
     let $target = (target ? query(target) : form) ?? form
 
     switch (swap) {
         case "innerHTML":
             $target.innerHTML = text
+            executeScripts($target)
             break
         case "outerHTML":
             $target.outerHTML = text
+            executeScripts($target)
             break
         case "append":
             $target.append(getHtml(text))
+            executeScripts($target)
             break
         case "prepend":
             $target.prepend(getHtml(text))
@@ -193,6 +217,20 @@ function htmlSwap({text, form, submitter}) {
                     continue
                 }
                 $t.replaceWith(el)
+                executeScripts(el)
+            }
+            break
+        case "select":
+            // @ts-ignore
+            let $newSelects = Array.from(getHtml(text).querySelectorAll(select))
+            // @ts-ignore
+            let $oldSelects = Array.from(doc.querySelectorAll(select))
+            for (let i = 0; i < $oldSelects.length; i++) {
+                let $new = $newSelects[i],
+                    $old = $oldSelects[i]
+                if (!$old || !$new) continue
+                $old.replaceWith($new)
+                executeScripts($new)
             }
             break
         default:
@@ -202,17 +240,49 @@ function htmlSwap({text, form, submitter}) {
     if(![form, submitter].find(hasAttr("hf-ignore-scroll"))) {
         onLoad()
     }
+}
 
+let scripts = new Set()
+/**
+* @param {Element} container
+* @returns {void}
+* */
+function executeScripts(container) {
+    for (let oldScript of container.querySelectorAll("script")) {
+        let scriptIdentifier = oldScript.src || oldScript.id
+        if (scripts.has(scriptIdentifier)) {
+            publishScriptLoad(container, oldScript)
+            continue
+        }
+        scripts.add(scriptIdentifier)
+        const newScript = doc.createElement("script")
+        for (let attr of oldScript.attributes) {
+            newScript.setAttribute(attr.name, attr.value)
+        }
+        newScript.appendChild(doc.createTextNode(oldScript.innerHTML))
+        oldScript.replaceWith(newScript)
+        publishScriptLoad(container, newScript)
+    }
+}
+
+/**
+* @param {Element} container
+* @param {HTMLScriptElement} script
+* @returns {void}
+* */
+function publishScriptLoad(container, script) {
+    publishAfter.push(() => publish(container, "hf:script:load", { script: ["src", "id"].map(x => getAttribute(script, x)).find(x => x) }))
 }
 
 /** Recenter page depending on how updated data occurred. **/
 
-/** @type {Element | null} */
+/**
+* @type { Element | null}
+* */
 let lastClick = null
 w.addEventListener('click', e => {
-    if (e.target instanceof Element) {
-        lastClick = e.target
-    }
+    // @ts-ignore
+    lastClick = e.target
 })
 
 /**
@@ -245,20 +315,27 @@ function beforeUnload(submitter, form) {
             // target
             t: { y: calculateY(target), q: (target?.id && `#${target.id}`) || (name && `[name="${name}"]`) },
             // miss
-            // @ts-ignore
             m: { y: calculateY(query(miss)), q: miss }
         }
     }
 }
 
 function onLoad() {
+    let $focus = query('[autofocus]')
+    if ($focus) {
+        $focus.focus()
+        $focus.scrollIntoView({
+            behavior: 'auto',
+            block: 'center',
+            inline: 'center'
+        })
+        return
+    }
     if (!pageLocation) return
     let { y, to, a: { t, m } } = pageLocation
-    if (to) {
-        let $scrollTo = query(to)
-        if ($scrollTo) {
-            return $scrollTo.scrollIntoView({ behavior: 'smooth' })
-        }
+    let $scrollTo = query(to)
+    if ($scrollTo) {
+        return $scrollTo.scrollIntoView({ behavior: 'smooth' })
     }
 
     let active
@@ -300,7 +377,7 @@ function calculateY(el) {
 
 /**
 * @param {string} method
-* @param {Element | undefined | null} el
+* @param {Element} el
 * */
 function run(method, el) {
     // @ts-ignore
