@@ -1,3 +1,5 @@
+
+// @ts-ignore
 self.hf = {}
 hf.version = "0.6.0"
 
@@ -29,9 +31,6 @@ async function publish(el, eventName, detail) {
     return
 }
 
-/**
-* @type {Function[]}
-* */
 const publishAfter = []
 
 doc.addEventListener("hf:swap", async e => {
@@ -87,11 +86,13 @@ doc.addEventListener("submit", async e => {
         if (method === "post") {
             // @ts-ignore
             options.body = new URLSearchParams([...preData])
-        } else {
+        } else if (method === "get") {
             for (let e of preData.entries()) {
                 // @ts-ignore
                 url.searchParams.append(...e)
             }
+        } else {
+            return
         }
         eventData.xhr = { url, options }
         await publish($originator, "hf:beforeRequest", eventData)
@@ -149,7 +150,7 @@ doc.addEventListener("submit", async e => {
 })
 
 /**
- * @param {Element | HTMLElement | undefined |  null} el 
+ * @param {HTMLElement | undefined} el 
  * @param {string} attributeName 
  * @returns {string | null | undefined}
  */
@@ -276,12 +277,8 @@ function publishScriptLoad(container, script) {
 
 /** Recenter page depending on how updated data occurred. **/
 
-/**
-* @type { Element | null}
-* */
 let lastClick = null
 w.addEventListener('click', e => {
-    // @ts-ignore
     lastClick = e.target
 })
 
