@@ -1,141 +1,102 @@
 "use strict";
 (() => {
-  self.hf = {};
-  hf.version = "0.6.0";
-  const hasAttr = (attribute) => (el) => el?.hasAttribute(attribute);
   let doc = document;
   let w = window;
   let query = doc.querySelector.bind(doc);
-  const inFlight = /* @__PURE__ */ new WeakMap();
-  async function publish(el, eventName, detail) {
-    if (!el.isConnected) {
-      el = doc;
-    }
-    let result = el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }));
-    if (detail?.wait)
-      await detail.wait();
-    if (!result)
-      return Promise.reject();
-    return;
-  }
-  const publishAfter = [];
-  doc.addEventListener("hf:swap", async (e) => {
-    const { detail } = e;
-    htmlSwap(detail);
-  });
+  let submitting = "hf-submitting";
   doc.addEventListener("submit", async (e) => {
-    const active = doc.activeElement;
-    const form = e.target;
-    const submitter = e.submitter, $originator = submitter ?? form;
+    const active = doc.activeElement, form = e.target, submitter = e.submitter, originator = submitter ?? form;
     if ([form, submitter].find(hasAttr("hf-ignore")))
       return;
     e.preventDefault();
-    if (inFlight.has(form)) {
+    if (hasAttr(submitting))
       return;
-    } else {
-      inFlight.set(form);
-    }
-    const method = submitter?.formMethod || form.method;
-    const eventData = { form, submitter, method, active };
+    setAttribute(form, submitting, "");
+    const method = getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get";
+    let action = getAttribute(submitter, "formaction") ?? getAttribute(form, "action") ?? "";
+    let url = new URL(action, location.origin);
+    const eventData = { form, submitter, method, active, originator, action, url };
     try {
       const preData = new FormData(form);
-      let pathname;
-      if (pathname = getAttribute(submitter, "formaction")) {
-      } else {
-        pathname = getAttribute(form, "action");
-      }
-      pathname = pathname ?? location.pathname;
-      let url = pathname.startsWith("?") ? new URL(pathname, form.baseURI) : new URL(pathname, location.origin);
-      const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) };
+      const options = {
+        method,
+        credentials: "same-origin",
+        headers: new Headers({ "HF-Request": "true" })
+      };
       if (method === "post") {
         options.body = new URLSearchParams([...preData]);
-      } else {
+      } else if (method === "get") {
         for (let e2 of preData.entries()) {
           url.searchParams.append(...e2);
         }
+      } else {
+        return;
       }
       eventData.xhr = { url, options };
-      await publish($originator, "hf:beforeRequest", eventData);
-      const response = await fetch(url.href, options);
+      await publish(originator, "hf:request-before", eventData);
+      const response = await fetch(url, options);
       eventData.xhr.response = response;
-      await publish($originator, "hf:afterRequest", eventData);
+      await publish(originator, "hf:request-after", eventData);
       if (response.redirected) {
         location.href = response.url;
         return;
       }
       if (response.status === 205) {
-        let url2 = response.headers.get("location");
-        url2 && (location.href = url2);
+        doc.getElementById("hf-refresh")?.requestSubmit();
         return;
       }
-      const contentType = response.headers.get("content-type"), hasContent = response.status !== 204;
-      if (hasContent && contentType?.includes("application/json")) {
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
         let data = JSON.parse(await response.json());
-        await publish($originator, "hf:json", { ...eventData, data });
-      } else if (hasContent && contentType?.includes("html")) {
+        await publish(originator, "hf:json", { ...eventData, data });
+      } else if (contentType?.includes("html")) {
         let text = await response.text();
-        await publish($originator, "hf:swap", { ...eventData, text });
-      } else if (response.status < 200 || response.status > 399) {
-        await publish($originator, "hf:responseError", eventData);
+        let data = { ...eventData, text };
+        await publish(originator, "hf:swap", data);
+        htmlSwap(data);
+      } else if (!response.ok) {
+        await publish(originator, "hf:response-error", eventData);
       }
       let maybeEvents = response.headers.get("hf-events");
-      try {
-        if (maybeEvents) {
-          let events = JSON.parse(maybeEvents);
-          await Promise.all(
-            Object.entries(events).map(([eventName, detail]) => publish($originator, eventName, detail))
-          );
-        }
-      } catch (ex) {
-        console.error(ex, maybeEvents);
+      if (maybeEvents) {
+        let events = JSON.parse(maybeEvents);
+        await Promise.all(
+          Object.entries(events).map(([eventName, detail]) => publish(originator, eventName, detail))
+        );
       }
     } catch (ex) {
       console.error(ex);
-      if (form instanceof HTMLFormElement)
-        form.submit();
+      setAttribute(form, "action", eventData.action);
+      setAttribute(form, "method", eventData.method);
+      run("submit", form);
     } finally {
-      inFlight.delete(form);
-      await publish($originator, "hf:completed", eventData);
-      setTimeout(() => {
-        publishAfter.map((p) => p());
-        publishAfter.length = 0;
-      }, 10);
+      form.removeAttribute(submitting);
+      await publish(originator, "hf:completed", eventData);
     }
   });
-  function getAttribute(el, attributeName) {
-    return el?.getAttribute(attributeName);
-  }
-  function getHtml(text) {
-    const template = doc.createElement("template");
-    template.innerHTML = text.trim();
-    return template.content;
-  }
   function htmlSwap({ text, form, submitter }) {
     if (text == null)
       return;
     beforeUnload(submitter, form);
-    let target = getAttribute(submitter, "hf-target") ?? getAttribute(form, "hf-target");
-    let swap = getAttribute(submitter, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML";
-    let select = getAttribute(submitter, "hf-select") ?? getAttribute(form, "hf-select");
+    let submitters = [submitter, form];
+    let target = mapFirst(getAttr("hf-target", submitters));
+    let swap = mapFirst(getAttr("hf-swap"), submitters) ?? "innerHTML";
+    let select = mapFirst(getAttr("hf-select"), submitters);
     if (select) {
       swap = "select";
     }
     let $target = (target ? query(target) : form) ?? form;
     switch (swap) {
-      case "innerHTML":
-        $target.innerHTML = text;
-        executeScripts($target);
-        break;
       case "outerHTML":
-        $target.outerHTML = text;
+      case "innerHTML":
+        $target[swap] = text;
         executeScripts($target);
         break;
       case "append":
-        $target.append(getHtml(text));
-        executeScripts($target);
-        break;
       case "prepend":
-        $target.prepend(getHtml(text));
+        let html = getHtml(text);
+        $target[swap](html);
+        executeScripts(html);
         break;
       case "beforebegin":
       case "afterbegin":
@@ -171,7 +132,7 @@
       default:
         console.warn(`Unknown swap type: "${swap}".`);
     }
-    if (![form, submitter].find(hasAttr("hf-ignore-scroll"))) {
+    if (!submitters.find(hasAttr("hf-scroll-ignore"))) {
       onLoad();
     }
   }
@@ -186,15 +147,15 @@
       scripts.add(scriptIdentifier);
       const newScript = doc.createElement("script");
       for (let attr of oldScript.attributes) {
-        newScript.setAttribute(attr.name, attr.value);
+        setAttribute(newScript, attr.name, attr.value);
       }
       newScript.appendChild(doc.createTextNode(oldScript.innerHTML));
       oldScript.replaceWith(newScript);
       publishScriptLoad(container, newScript);
+      publish(container, "hf:script-loaded", {
+        script: mapFirst((x) => getAttribute(newScript, x), ["src", "id"])
+      }, 10);
     }
-  }
-  function publishScriptLoad(container, script) {
-    publishAfter.push(() => publish(container, "hf:script:load", { script: ["src", "id"].map((x) => getAttribute(script, x)).find((x) => x) }));
   }
   let lastClick = null;
   w.addEventListener("click", (e) => {
@@ -204,7 +165,7 @@
   function beforeUnload(submitter, form) {
     let active = doc.activeElement;
     let target = active === doc.body ? lastClick : active;
-    let to = getAttribute([submitter, form].find(hasAttr("hf-scroll-to")), "hf-scroll-to");
+    let to = mapFirst(getAttr("hf-scroll-to"), [submitter, form]);
     let scrollTarget = getAttribute(target, "hf-scroll-target");
     if (scrollTarget) {
       target = query(scrollTarget);
@@ -224,30 +185,29 @@
     };
   }
   function onLoad() {
-    let $focus = query("[autofocus]");
-    if ($focus) {
-      $focus.focus();
-      $focus.scrollIntoView({
+    let focus = query("[autofocus]");
+    if (focus) {
+      focus.focus();
+      return focus.scrollIntoView({
         behavior: "auto",
         block: "center",
         inline: "center"
       });
-      return;
     }
     if (!pageLocation)
       return;
     let { y, to, a: { t, m } } = pageLocation;
-    let $scrollTo = query(to);
-    if ($scrollTo) {
-      return $scrollTo.scrollIntoView({ behavior: "smooth" });
+    let scrollTo = query(to);
+    if (scrollTo) {
+      return scrollTo.scrollIntoView({ behavior: "smooth" });
     }
     let active;
     let elY = t.q && (active = query(t.q)) ? t.y : m.q && (active = query(m.q)) ? m.y : 0;
-    if (!hasAttr("hf-skip-focus")(active)) {
+    if (!hasAttr("hf-focus-skip")(active)) {
       run("focus", active);
       run("select", active);
     }
-    if (!hasAttr("hf-skip-scroll")(doc.body)) {
+    if (!hasAttr("hf-scroll-skip")(doc.body)) {
       if (active && elY) {
         w.scrollTo({
           top: w.scrollY + calculateY(active) - elY
@@ -260,7 +220,47 @@
   function calculateY(el) {
     return el?.getBoundingClientRect().top;
   }
+  async function publish(el, eventName, detail, wait) {
+    if (!el.isConnected) {
+      el = doc;
+    }
+    if (wait) {
+      setTimeout(() => publish(el, eventName, detail), wait);
+    }
+    let result = el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }));
+    if (detail?.wait)
+      await detail.wait();
+    if (!result)
+      return Promise.reject();
+    return;
+  }
   function run(method, el) {
-    el && el[method] && el[method]();
+    el && el[method] instanceof Function && el[method]();
+  }
+  function mapFirst(fn, xs) {
+    for (let x of xs) {
+      let result = fn(x);
+      if (result)
+        return result;
+    }
+  }
+  function hasAttr(attribute) {
+    return (el) => el?.hasAttribute(attribute);
+  }
+  function getAttr(attributeName) {
+    return (el) => getAttribute(el, attributeName);
+  }
+  function getAttribute(el, attributeName) {
+    if (el?.hasAttribute(attributeName))
+      return el.getAttribute(attributeName);
+    return void 0;
+  }
+  function setAttribute(el, attributeName, value) {
+    el?.setAttribute(attributeName, value);
+  }
+  function getHtml(text) {
+    const template = doc.createElement("template");
+    template.innerHTML = text;
+    return template.content;
   }
 })();
