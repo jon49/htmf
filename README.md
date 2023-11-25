@@ -205,7 +205,6 @@ identify AJAX requests and provide additional information.
 
 ```
 HF-Request: true
-
 ```
 
 - **Description:** This header is sent with each AJAX request initiated by the
@@ -238,29 +237,25 @@ When a response is given outside of a 200 response a special handler will be
 treated for that response.
 
 1. `200 OK`
-
-- **Description:** Indicates a successful response.
-- **Handling:** The library processes the response based on its content type.
-    - If the content type is JSON (application/json), it triggers the `hf:json`
-      event with the parsed JSON data.
-    - If the content type is HTML (text/html), it triggers the `hf:swap` event
-      with the received HTML content.
-    - For other content types, the library does not perform additional handling.
-
+    - **Description:** Indicates a successful response.
+    - **Handling:** The library processes the response based on its content
+      type.
+        - If the content type is JSON (application/json), it triggers the
+          `hf:json` event with the parsed JSON data.
+        - If the content type is HTML (text/html), it triggers the `hf:swap`
+          event with the received HTML content.
+        - For other content types, the library does not perform additional
+          handling.
 2. `204 No Content`
-
-- **Description:** This will do nothing. This is useful for sending a custom
-  event with a response to the user, e.g., letting the user know the information
-  was saved.
-
+    - **Description:** This will do nothing. This is useful for sending a custom
+      event with a response to the user, e.g., letting the user know the
+      information was saved.
 3. `205 Reset Content`
-
-- **Description:** This will reset the content in the form. You can also send
-  back events to go along with this.
-
+    - **Description:** This will reset the content in the form. You can also
+      send back events to go along with this.
 4. Redirected
-
-- **Description:** This will redirect the page to the specified response URL.
+    - **Description:** This will redirect the page to the specified response
+      URL.
 
 ## Version
 
