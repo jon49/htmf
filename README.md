@@ -1,60 +1,279 @@
-# HTMF
+# HTML Form Handler
 
-`htmf` is a minimalist library similar to HTMX and other technologies
-(Behavior.js, unpoly, etc.) designed to work directly with forms. It has a
-minimal API. It also makes it easy to build Multipage apps (MPA) which works
-without JavaScript and the JS is just progressive enhancement.
+`html-form` (htmf) is a minimalist library similar to HTMX and other
+technologies (Behavior.js (RIP), unpoly, etc.) designed to work directly with
+forms. It has a minimal API. It also makes it easy to build Multipage apps (MPA)
+which works without JavaScript and the JS is just progressive enhancement.
 
 `htmf` is 2.9 kB minified and 1.7 kB minified and zipped.
 
 A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
 
-## Core functionality
+## Overview
 
-Use forms just like you normally would, but instead of calling through the
-normal paths `htmf` will take over the call and the partial HTML returned
-will be parsed back into the HTML. When the `htmf` library makes a call to
-the back end it will add the header `HF-Request: true` to the HTTP call.
+This JavaScript code provides functionality for handling HTML form submissions
+with added features such as asynchronous submission, AJAX requests, and dynamic
+content updates.
 
-Use `hf-target` in the calling form or button to decide where the returning `HTML`
-will be placed. Defaults to the form itself.
+## Features
 
-`hf-target` defaults to a swap of `innerHTML`.
+1. Asynchronous Form Submission:
+    - The code listens for form submission events and handles them
+      asynchronously using the Fetch API.
+2. Event Pub-Sub System:
+    - Utilizes a simple event-publishing and subscribing system to allow for
+      customization and extensibility.
+3. Dynamic Content Updates:
+    - Supports dynamic content updates based on the response from the server,
+      including JSON and HTML responses.
+4. Script Execution:
+    - Handles script execution within the received HTML content to ensure proper
+      functionality.
+5. Scroll Management:
+    - Manages scroll positions before and after form submissions to provide a
+      seamless user experience.
+6. Event-Based Customization:
+    - Allows customization of various events like "hf:request-before,"
+      "hf:request-after," "hf:json," "hf:swap," and more.
 
-If you don't want it to replace the contents you can add the attribute
-`hf-swap` with types `outerHTML`, `innerHTML`, `beforebegin`, `afterbegin`,
-`beforeend`, `afterend`, `append`, `prepend`, `outerHTML` (replace), and `oob`
-for out-of-bound replacements (matches on the IDs of the elements).
+## Usage
 
-If you would like a form to not be controlled by `htmf` place the attribute
-`hf-ignore` on the form or on the submit button.
+### HTML Form Handler Attributes
 
-If you would like to dispatch a custom event send back the header `hf-events`
-with a JSON value with the name of the events as keys.
+The HTML Form Handler (HF) library utilizes custom attributes on HTML elements
+to enable various functionalities and customize the behavior of form
+submissions. These attributes are designed to provide flexibility and
+extensibility to meet different use cases.
 
-## Auto scrolling and focusing
+1. `hf-ignore`
 
-HTMF will automatically keep the active element in focus and at the same
-scrolling location after an HTMF swap. These extra scrolling attributes will
-help you fine tune any changes you would like.
+- **Description:** Prevents the associated form or submitter element from being
+processed by the HTML Form Handler.
+- **Usage:**
+    - Add hf-ignore attribute to a form or submit button.
 
-`hf-scroll-to`: After load scroll to specified queried element.
+```html
+<form hf-ignore>
+  <!-- Form content -->
+</form>
 
-`hf-scroll-target`: Target a different element than the default one.
+<button type="submit" hf-ignore>Submit</button>
+```
 
-`hf-scroll-miss`: If the target scroll element is missing use the
-`hf-scroll-miss` defined query instead.
+2. `hf-target`
 
-`hf-skip-focus`: Don't focus on element.
+- **Description:** Specifies the target element for swapping content. The
+  library will update the content of this element based on the server response.
+- **Usage:**
+    - Add hf-target attribute to a form or submit button.
+    - The value is a query selector targeting the element where the content
+      should be updated.
 
-`hf-skip-scroll`: Don't autoscroll to element.
+```html
+<form hf-target="#result-container">
+  <!-- Form content -->
+</form>
 
-## Snappy pages
+<button type="submit" hf-target=".result">Submit</button>
+```
 
-If you would like your app to be a bit snappier consider using the JavaScript
-library instant.page.
+3. `hf-swap`
+
+- **Description:** Defines the type of content swapping to be performed. This
+  attribute determines how the received HTML content should replace the target
+  element.
+- **Usage:**
+    - Add `hf-swap` attribute to a form or submit button.
+    - Possible values: `outerHTML`, `innerHTML`, `append`, `prepend`,
+      `beforebegin`, `afterbegin`, `beforeend`, `afterend`, `oob`.
+
+```html
+<form hf-swap="innerHTML">
+  <!-- Form content -->
+</form>
+
+<button type="submit" hf-swap="append">Submit</button>
+```
+
+4. `hf-select`
+
+- **Description:** Specifies a query selector all for selecting specific
+  elements within the received HTML content to replace existing elements.
+- **Usage:**
+    - Add `hf-select` attribute to a form or submit button.
+
+```html
+<form hf-select=".select-container,#other-item">
+  <!-- Form content -->
+</form>
+
+<button type="submit" hf-select=".select-container,#other-item">Submit</button>
+```
+
+5. `hf-scroll-ignore`
+
+- **Description:** Prevents automatic scrolling after a form submission.
+- **Usage:**
+    - Add `hf-scroll-ignore` attribute to a form or submit button.
+
+```html
+<form hf-scroll-ignore>
+  <!-- Form content -->
+</form>
+
+<button type="submit" hf-scroll-ignore>Submit</button>
+```
+
+6. `hf-scroll-to`
+
+- **Description:** Specifies the element to which the page should scroll after a
+  form submission.
+- **Usage:**
+    - Add `hf-scroll-to` attribute to a form or submit button.
+    - The value is a query selector targeting the element to scroll to.
+
+```html
+<form hf-scroll-to="#result-section">
+  <!-- Form content -->
+</form>
+
+<button type="submit" hf-scroll-to=".result-section">Submit</button>
+```
+
+7. `hf-scroll-skip`
+
+- **Description:** Skips scrolling entirely after a form submission.
+- **Usage:**
+    - Add hf-scroll-skip attribute to the body element.
+
+```html
+<body hf-scroll-skip>
+  <!-- Page content -->
+</body>
+```
+
+8. `hf-focus-skip`
+
+- **Description:** Skips focusing on elements after a form submission.
+- **Usage:**
+    - Add `hf-focus-skip` attribute to form elements.
+
+```html
+<form hf-focus-skip>
+  <!-- Form content -->
+</form>
+```
+
+### Eventing
+
+9. `hf:script-loaded`
+
+- **Description:** An event triggered after a script is successfully loaded.
+- **Usage:**
+    - Subscribe to the `hf:script-loaded` event.
+
+```javascript
+doc.addEventListener("hf:script-loaded", e => {
+  // Handle script-loaded event
+});
+```
+
+10. `hf:request-before`, `hf:request-after`, `hf:json`, `hf:swap`,
+    `hf:response-error`, `hf:completed`
+
+- **Description:** Events triggered at different stages of the form submission
+  process.
+- **Usage:**
+    - Subscribe to these events for customization.
+
+```javascript
+doc.addEventListener("hf:json", e => {
+  // Handle JSON response event
+});
+
+doc.addEventListener("hf:swap", e => {
+  // Handle content swap event
+});
+
+// ... and so on
+```
+
+### Headers Sent to the Server
+
+The HTML Form Handler library sends a custom header to the server to help
+identify AJAX requests and provide additional information.
+
+```
+HF-Request: true
+
+```
+
+- **Description:** This header is sent with each AJAX request initiated by the
+  HTML Form Handler.
+- **Purpose:** Identifies the request as originating from the HTML Form Handler,
+  allowing the server to distinguish between regular and AJAX requests.
+
+### Headers Sent to the Client
+
+The HTML Form Handler library provides the ability to include custom headers in
+the server's response, facilitating additional information or actions on the
+client side.
+
+#### `hf-events`
+
+- **Description:** A custom header included in the server's response to specify
+  events to be triggered on the client side.
+- **Format:** JSON format containing event names as keys and corresponding event
+  details as values.
+
+**Example:**
+
+```css
+hf-events: {"eventName1": {"detail1": "value1"}, "eventName2": {"detail2": "value2"}}
+```
+
+### Special response status
+
+When a response is given outside of a 200 response a special handler will be
+treated for that response.
+
+1. `200 OK`
+
+- **Description:** Indicates a successful response.
+- **Handling:** The library processes the response based on its content type.
+    - If the content type is JSON (application/json), it triggers the `hf:json`
+      event with the parsed JSON data.
+    - If the content type is HTML (text/html), it triggers the `hf:swap` event
+      with the received HTML content.
+    - For other content types, the library does not perform additional handling.
+
+2. `204 No Content`
+
+- **Description:** This will do nothing. This is useful for sending a custom
+  event with a response to the user, e.g., letting the user know the information
+  was saved.
+
+3. `205 Reset Content`
+
+- **Description:** This will reset the content in the form. You can also send
+  back events to go along with this.
+
+4. Redirected
+
+- **Description:** This will redirect the page to the specified response URL.
 
 ## Version
+
+### 0.7.0
+
+Substantial changes in this one. Fixed errors, use `getAttribute` to get the
+attributes to avoid conflicts with form names. Fixed other errors. Standardized
+event naming and attribute naming. Code clean up. Removed the JS Doc typing.
+Changed how double click detection is handled. Fixed 205 response to reset form.
+
+### 0.6.0
+
+Add ability to handle scripts returned in the HTML snippets.
 
 ### 0.5.0
 
