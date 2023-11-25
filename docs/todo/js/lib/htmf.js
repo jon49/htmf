@@ -41,10 +41,6 @@
         location.href = response.url;
         return;
       }
-      if (response.status === 205) {
-        doc.getElementById("hf-refresh")?.requestSubmit();
-        return;
-      }
       const contentType = response.headers.get("content-type");
       if (contentType?.includes("application/json")) {
         let data = JSON.parse(await response.json());
@@ -56,6 +52,9 @@
         htmlSwap(data);
       } else if (!response.ok) {
         await publish(originator, "hf:response-error", eventData);
+      }
+      if (response.status === 205) {
+        form.reset();
       }
       let maybeEvents = response.headers.get("hf-events");
       if (maybeEvents) {

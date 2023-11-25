@@ -63,11 +63,6 @@ doc.addEventListener("submit", async e => {
             return
         }
 
-        if (response.status === 205) {
-            doc.getElementById("hf-refresh")?.requestSubmit()
-            return
-        }
-
         const contentType = response.headers.get("content-type")
         if (contentType?.includes("application/json")) {
             let data = JSON.parse(await response.json())
@@ -79,6 +74,10 @@ doc.addEventListener("submit", async e => {
             htmlSwap(data)
         } else if (!response.ok) {
             await publish(originator, "hf:response-error", eventData)
+        }
+
+        if (response.status === 205) {
+            form.reset()
         }
 
         let maybeEvents = response.headers.get("hf-events")
