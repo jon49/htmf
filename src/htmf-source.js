@@ -1,185 +1,120 @@
 
-// @ts-ignore
-self.hf = {}
-hf.version = "0.6.0"
-
-const hasAttr =
-    (/** @type {string} */ attribute) =>
-    (/** @type {{ hasAttribute: (arg0: string) => any; }|undefined} */ el) =>
-        el?.hasAttribute(attribute)
+// version 0.7.0
 
 let doc = document,
     w = window,
-    query = doc.querySelector.bind(doc)
+    query = doc.querySelector.bind(doc),
+    submitting = "hf-submitting"
 
-const inFlight = new WeakMap
-
-/**
- * @param {Element} el
- * @param {string} eventName
- * @param {any} detail
- * @returns {Promise<undefined>}
- */
-async function publish(el, eventName, detail) {
-    if (!el.isConnected) {
-        // @ts-ignore
-        el = doc
-    }
-    let result = el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }))
-    if (detail?.wait) await detail.wait()
-    if (!result) return Promise.reject()
-    return
-}
-
-const publishAfter = []
-
-doc.addEventListener("hf:swap", async e => {
-    /** @type {{ detail: { text: string|undefined, form: HTMLFormElement, button: HTMLButtonElement | HTMLInputElement | undefined }}} */
-    // @ts-ignore
-    const { detail } = e
-    // @ts-ignore
-    htmlSwap(detail)
-})
-
-// @ts-ignore
 doc.addEventListener("submit", async e => {
-    const active = doc.activeElement
-
-    /** @type {HTMLFormElement} */
-    // @ts-ignore
-    const form = e.target
-
-    /** @type {HTMLButtonElement|HTMLInputElement|undefined} */
-    // @ts-ignore
-    const submitter = e.submitter,
-          $originator = submitter ?? form
+    const active = doc.activeElement,
+          form = e.target,
+          submitter = e.submitter,
+          originator = submitter ?? form
 
     if ([form, submitter].find(hasAttr("hf-ignore"))) return
     e.preventDefault()
 
-    if (inFlight.has(form)) {
-        return
-    } else {
-        // @ts-ignore
-        inFlight.set(form)
-    }
+    if (hasAttr(submitting)) return
+    setAttribute(form, submitting, "")
 
-    const method = submitter?.formMethod || form.method
-    /** @type {{ form: HTMLFormElement, submitter: HTMLButtonElement | HTMLInputElement | undefined, active: Element | null, method: string, xhr?: { url: URL, options: any, response?: Response } }} */
-    const eventData = { form, submitter, method, active }
+    const method =
+        getAttribute(submitter, "formmethod")
+        ?? getAttribute(form, "method")
+        ?? "get"
+
+    let action =
+        getAttribute(submitter, "formaction")
+        ?? getAttribute(form, "action")
+        ?? ""
+
+    let url = new URL(action, location.origin)
+
+    const eventData = { form, submitter, method, active, originator, action, url }
 
     try {
         const preData = new FormData(form)
-        let pathname
-        if (pathname = getAttribute(submitter, "formaction")) {
-        } else {
-            pathname = getAttribute(form, "action")
-        }
-        pathname = pathname ?? location.pathname
-        // @ts-ignore
-        let url =
-            pathname.startsWith("?")
-                ? new URL(pathname, form.baseURI)
-            : new URL(pathname, location.origin)
 
-        const options = { method, credentials: "same-origin", headers: new Headers({ "HF-Request": "true" }) }
+        const options = {
+            method,
+            credentials: "same-origin",
+            headers: new Headers({ "HF-Request": "true" }) }
+
         if (method === "post") {
-            // @ts-ignore
             options.body = new URLSearchParams([...preData])
         } else if (method === "get") {
             for (let e of preData.entries()) {
-                // @ts-ignore
                 url.searchParams.append(...e)
             }
         } else {
+            // dialog, etc
             return
         }
+
         eventData.xhr = { url, options }
-        await publish($originator, "hf:beforeRequest", eventData)
-        // @ts-ignore
-        const response = await fetch(url.href, options)
+        await publish(originator, "hf:request-before", eventData)
+
+        const response = await fetch(url, options)
         eventData.xhr.response = response
-        await publish($originator, "hf:afterRequest", eventData)
+        await publish(originator, "hf:request-after", eventData)
 
         if (response.redirected) {
             location.href = response.url
             return
         }
+
         if (response.status === 205) {
-            let url = response.headers.get("location")
-            url && (location.href = url)
+            doc.getElementById("hf-refresh")?.requestSubmit()
             return
         }
 
-        const contentType = response.headers.get("content-type"),
-            hasContent = response.status !== 204
-        if (hasContent && contentType?.includes("application/json")) {
+        const contentType = response.headers.get("content-type")
+        if (contentType?.includes("application/json")) {
             let data = JSON.parse(await response.json())
-            await publish($originator, "hf:json", {...eventData, data})
-        } else if (hasContent && contentType?.includes("html")) {
+            await publish(originator, "hf:json", {...eventData, data})
+        } else if (contentType?.includes("html")) {
             let text = await response.text()
-            await publish($originator, "hf:swap", {...eventData, text})
-        } else if (response.status < 200 || response.status > 399) {
-            await publish($originator, "hf:responseError", eventData)
+            let data =  { ...eventData, text }
+            await publish(originator, "hf:swap", data)
+            htmlSwap(data)
+        } else if (!response.ok) {
+            await publish(originator, "hf:response-error", eventData)
         }
 
         let maybeEvents = response.headers.get("hf-events")
-        try {
-            if (maybeEvents) {
-                let events = JSON.parse(maybeEvents)
-                await
-                    Promise.all(
-                        Object.entries(events)
-                        .map(([eventName, detail]) =>
-                            publish($originator, eventName, detail)))
-            }
-        } catch (ex) {
-            console.error(ex, maybeEvents)
+        if (maybeEvents) {
+            let events = JSON.parse(maybeEvents)
+            await
+                Promise.all(
+                    Object.entries(events)
+                    .map(([eventName, detail]) =>
+                        publish(originator, eventName, detail)))
         }
+
     } catch (ex) {
+
         console.error(ex)
-        if (form instanceof HTMLFormElement) form.submit()
+        setAttribute(form, "action", eventData.action)
+        setAttribute(form, "method", eventData.method)
+        run("submit", form)
+
     } finally {
-        inFlight.delete(form)
-        await publish($originator, "hf:completed", eventData)
-        setTimeout(() => {
-            publishAfter.map(p => p())
-            publishAfter.length = 0
-        }, 10)
+
+        form.removeAttribute(submitting)
+        await publish(originator, "hf:completed", eventData)
+
     }
 })
 
-/**
- * @param {HTMLElement | undefined} el 
- * @param {string} attributeName 
- * @returns {string | null | undefined}
- */
-function getAttribute(el, attributeName) {
-    return el?.getAttribute(attributeName)
-}
-
-/**
- * @param {string} text
- * @return {DocumentFragment}
- */
-function getHtml(text) {
-    const template = doc.createElement("template")
-    template.innerHTML = text.trim()
-    return template.content
-}
-
-/**
- * @param {{ text: string|undefined, form: HTMLFormElement, active: Element | null, submitter: HTMLButtonElement | HTMLInputElement | undefined }} data 
- * @returns 
- */
 function htmlSwap({text, form, submitter}) {
     if (text == null) return
 
     beforeUnload(submitter, form)
 
-    let target = getAttribute(submitter, "hf-target") ?? getAttribute(form, "hf-target")
-    let swap = getAttribute(submitter, "hf-swap") ?? getAttribute(form, "hf-swap") ?? "innerHTML"
-    let select = getAttribute(submitter, "hf-select") ?? getAttribute(form, "hf-select")
+    let submitters = [submitter, form]
+    let target = mapFirst(getAttr("hf-target", submitters))
+    let swap = mapFirst(getAttr("hf-swap"), submitters) ?? "innerHTML"
+    let select = mapFirst(getAttr("hf-select"), submitters)
     if (select) {
         swap = "select"
     }
@@ -187,20 +122,16 @@ function htmlSwap({text, form, submitter}) {
     let $target = (target ? query(target) : form) ?? form
 
     switch (swap) {
-        case "innerHTML":
-            $target.innerHTML = text
-            executeScripts($target)
-            break
         case "outerHTML":
-            $target.outerHTML = text
+        case "innerHTML":
+            $target[swap] = text
             executeScripts($target)
             break
         case "append":
-            $target.append(getHtml(text))
-            executeScripts($target)
-            break
         case "prepend":
-            $target.prepend(getHtml(text))
+            let html = getHtml(text)
+            $target[swap](html)
+            executeScripts(html)
             break
         case "beforebegin":
         case "afterbegin":
@@ -222,9 +153,7 @@ function htmlSwap({text, form, submitter}) {
             }
             break
         case "select":
-            // @ts-ignore
             let $newSelects = Array.from(getHtml(text).querySelectorAll(select))
-            // @ts-ignore
             let $oldSelects = Array.from(doc.querySelectorAll(select))
             for (let i = 0; i < $oldSelects.length; i++) {
                 let $new = $newSelects[i],
@@ -238,16 +167,12 @@ function htmlSwap({text, form, submitter}) {
             console.warn(`Unknown swap type: "${swap}".`)
     }
 
-    if(![form, submitter].find(hasAttr("hf-ignore-scroll"))) {
+    if(!submitters.find(hasAttr("hf-scroll-ignore"))) {
         onLoad()
     }
 }
 
 let scripts = new Set()
-/**
-* @param {Element} container
-* @returns {void}
-* */
 function executeScripts(container) {
     for (let oldScript of container.querySelectorAll("script")) {
         let scriptIdentifier = oldScript.src || oldScript.id
@@ -258,21 +183,15 @@ function executeScripts(container) {
         scripts.add(scriptIdentifier)
         const newScript = doc.createElement("script")
         for (let attr of oldScript.attributes) {
-            newScript.setAttribute(attr.name, attr.value)
+            setAttribute(newScript, attr.name, attr.value)
         }
         newScript.appendChild(doc.createTextNode(oldScript.innerHTML))
         oldScript.replaceWith(newScript)
         publishScriptLoad(container, newScript)
+        publish(container, "hf:script-loaded", {
+            script: mapFirst(x => getAttribute(newScript, x), ["src", "id"])
+        }, 10)
     }
-}
-
-/**
-* @param {Element} container
-* @param {HTMLScriptElement} script
-* @returns {void}
-* */
-function publishScriptLoad(container, script) {
-    publishAfter.push(() => publish(container, "hf:script:load", { script: ["src", "id"].map(x => getAttribute(script, x)).find(x => x) }))
 }
 
 /** Recenter page depending on how updated data occurred. **/
@@ -282,22 +201,12 @@ w.addEventListener('click', e => {
     lastClick = e.target
 })
 
-/**
-* @typedef {{ y: number | undefined, q: string | null | undefined }} ScrollTarget
-**/
-
-/** @type {{ y: number | undefined, to: string | undefined | null, a: { t: ScrollTarget, m: ScrollTarget } }} | undefined} */
 let pageLocation
 
-/**
-* @param {HTMLButtonElement | HTMLInputElement | undefined} submitter
-* @param {HTMLFormElement} form
-* @returns {void}
-* */
 function beforeUnload(submitter, form) {
     let active = doc.activeElement
     let target = active === doc.body ? lastClick : active
-    let to = getAttribute([submitter, form].find(hasAttr("hf-scroll-to")), "hf-scroll-to")
+    let to = mapFirst(getAttr("hf-scroll-to"), [submitter, form])
     let scrollTarget = getAttribute(target, 'hf-scroll-target')
     if (scrollTarget) {
         target = query(scrollTarget)
@@ -318,21 +227,22 @@ function beforeUnload(submitter, form) {
 }
 
 function onLoad() {
-    let $focus = query('[autofocus]')
-    if ($focus) {
-        $focus.focus()
-        $focus.scrollIntoView({
-            behavior: 'auto',
-            block: 'center',
-            inline: 'center'
+    let focus = query("[autofocus]")
+    if (focus) {
+        focus.focus()
+        return focus.scrollIntoView({
+            behavior: "auto",
+            block: "center",
+            inline: "center"
         })
-        return
     }
+
     if (!pageLocation) return
     let { y, to, a: { t, m } } = pageLocation
-    let $scrollTo = query(to)
-    if ($scrollTo) {
-        return $scrollTo.scrollIntoView({ behavior: 'smooth' })
+
+    let scrollTo = query(to)
+    if (scrollTo) {
+        return scrollTo.scrollIntoView({ behavior: "smooth" })
     }
 
     let active
@@ -342,12 +252,12 @@ function onLoad() {
         : (m.q && (active = query(m.q)))
             ?  m.y
         : 0
-    if (!hasAttr('hf-skip-focus')(active)) {
-        run('focus', active)
-        run('select', active)
+    if (!hasAttr("hf-focus-skip")(active)) {
+        run("focus", active)
+        run("select", active)
     }
 
-    if (!hasAttr('hf-skip-scroll')(doc.body)) {
+    if (!hasAttr("hf-scroll-skip")(doc.body)) {
         if (active && elY) {
             // Scroll to where element was before
             w.scrollTo({
@@ -364,21 +274,56 @@ function onLoad() {
     }
 }
 
-/**
-* @param {Element | null} el
-* @returns {number | undefined}
-* */
 function calculateY(el) {
     return el?.getBoundingClientRect().top
 }
 
-/**
-* @param {string} method
-* @param {Element} el
-* */
-function run(method, el) {
-    // @ts-ignore
-    el && el[method] && el[method]()
+async function publish(el, eventName, detail, wait) {
+    if (!el.isConnected) {
+        el = doc
+    }
+    if (wait) {
+        setTimeout(() => publish(el, eventName, detail), wait)
+    }
+    let result = el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }))
+    if (detail?.wait) await detail.wait()
+    if (!result) return Promise.reject()
+    return
 }
 
+function run(method, el) {
+    el && el[method] instanceof Function && el[method]()
+}
+
+function mapFirst(fn, xs) {
+    for (let x of xs) {
+        let result = fn(x)
+        if (result) return result
+    }
+}
+
+function hasAttr(attribute) {
+    return (el) =>
+        el?.hasAttribute(attribute)
+}
+
+
+function getAttr(attributeName) {
+    return el => getAttribute(el, attributeName)
+}
+
+function getAttribute(el, attributeName) {
+    if (el?.hasAttribute(attributeName)) return el.getAttribute(attributeName)
+    return undefined
+}
+
+function setAttribute(el, attributeName, value) {
+    el?.setAttribute(attributeName, value)
+}
+
+function getHtml(text) {
+    const template = doc.createElement("template")
+    template.innerHTML = text
+    return template.content
+}
 
