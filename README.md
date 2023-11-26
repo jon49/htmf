@@ -266,6 +266,14 @@ treated for that response.
 
 ## Version
 
+### 0.7.3
+
+Fixed event to match documented event naming.
+
+### 0.7.1
+
+Fixed bugs which occurred during the rewrite.
+
 ### 0.7.0
 
 Substantial changes in this one. Fixed errors, use `getAttribute` to get the
