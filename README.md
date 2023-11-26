@@ -5,7 +5,7 @@ technologies (Behavior.js (RIP), unpoly, etc.) designed to work directly with
 forms. It has a minimal API. It also makes it easy to build Multipage apps (MPA)
 which works without JavaScript and the JS is just progressive enhancement.
 
-`htmf` is 2.9 kB minified and 1.7 kB minified and zipped.
+`htmf` is 4.1 kB minified and 2.2 kB minified and zipped.
 
 A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
 

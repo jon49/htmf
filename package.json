@@ -7,7 +7,7 @@
     "bugs": {
         "url": "https://github.com/jon49/htmf/issues"
     },
-    "version": "0.7.1",
+    "version": "0.7.2",
     "main": "src/html-form.js",
     "scripts": {
         "start": "npm run clean && npm run make-dirs && npm run static && esbuild --format=esm --watch --outdir=docs/todo --bundle --servedir=docs/todo ./src-todo/sw.ts",
@@ -17,7 +17,7 @@
         "make-dirs": "mkdir -p docs/todo/js docs/todo/css docs/todo/js/lib",
         "app": "esbuild ./src-todo/js/app.ts --bundle --format=iife --outdir=docs/todo/js",
         "clean": "rm -rf docs/todo",
-        "build": "npm run clean && npm run make-dirs && npm run static && esbuild --format=esm --outdir=docs/todo --bundle ./src-todo/sw.ts"
+        "build": "npm run clean && npm run make-dirs && npm run static && esbuild --format=esm --outdir=docs/todo --bundle ./src-todo/sw.ts && ./tasks/build.nu"
     },
     "dependencies": {
         "html-template-tag-stream": "^1.1.2",
