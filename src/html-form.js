@@ -188,7 +188,7 @@ function executeScripts(container) {
 }
 
 function publishScriptLoad(container, script) {
-    publish(container, "hf:script-load", {
+    publish(container, "hf:script-loaded", {
         script: mapFirst(x => getAttribute(script, x), ["src", "id"])
     }, 10)
 }
