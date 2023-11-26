@@ -5,6 +5,9 @@ technologies (Behavior.js (RIP), unpoly, etc.) designed to work directly with
 forms. It has a minimal API. It also makes it easy to build Multipage apps (MPA)
 which works without JavaScript and the JS is just progressive enhancement.
 
+I have successfully created offline-first applications with this library. I have
+also successfully used it to create an offline-first, SPA, PWA application.
+
 `htmf` is 4.1 kB minified and 2.2 kB minified and zipped.
 
 A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
