@@ -36,6 +36,13 @@ content updates.
     - Allows customization of various events like "hf:request-before,"
       "hf:request-after," "hf:json," "hf:swap," and more.
 
+## Installation
+
+Copy the file from the source code `public/html-form.js` or the minified version
+`public/html-form.min.js`.
+
+Or use `npm` `npm i html-form` and reference it like so `import "html-form"`
+
 ## Usage
 
 ### HTML Form Handler Attributes
