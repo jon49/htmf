@@ -9,7 +9,7 @@
     if ([form, submitter].find(hasAttr("hf-ignore")))
       return;
     e.preventDefault();
-    if (hasAttr(submitting))
+    if (hasAttr(submitting)(form))
       return;
     setAttribute(form, submitting, "");
     const method = getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get";
@@ -78,7 +78,7 @@
       return;
     beforeUnload(submitter, form);
     let submitters = [submitter, form];
-    let target = mapFirst(getAttr("hf-target", submitters));
+    let target = mapFirst(getAttr("hf-target"), submitters);
     let swap = mapFirst(getAttr("hf-swap"), submitters) ?? "innerHTML";
     let select = mapFirst(getAttr("hf-select"), submitters);
     if (select) {
@@ -151,10 +151,12 @@
       newScript.appendChild(doc.createTextNode(oldScript.innerHTML));
       oldScript.replaceWith(newScript);
       publishScriptLoad(container, newScript);
-      publish(container, "hf:script-loaded", {
-        script: mapFirst((x) => getAttribute(newScript, x), ["src", "id"])
-      }, 10);
     }
+  }
+  function publishScriptLoad(container, script) {
+    publish(container, "hf:script-load", {
+      script: mapFirst((x) => getAttribute(script, x), ["src", "id"])
+    }, 10);
   }
   let lastClick = null;
   w.addEventListener("click", (e) => {

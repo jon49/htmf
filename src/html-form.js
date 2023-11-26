@@ -1,6 +1,3 @@
-
-// version 0.7.0
-
 let doc = document,
     w = window,
     query = doc.querySelector.bind(doc),
@@ -15,7 +12,7 @@ doc.addEventListener("submit", async e => {
     if ([form, submitter].find(hasAttr("hf-ignore"))) return
     e.preventDefault()
 
-    if (hasAttr(submitting)) return
+    if (hasAttr(submitting)(form)) return
     setAttribute(form, submitting, "")
 
     const method =
@@ -111,7 +108,7 @@ function htmlSwap({text, form, submitter}) {
     beforeUnload(submitter, form)
 
     let submitters = [submitter, form]
-    let target = mapFirst(getAttr("hf-target", submitters))
+    let target = mapFirst(getAttr("hf-target"), submitters)
     let swap = mapFirst(getAttr("hf-swap"), submitters) ?? "innerHTML"
     let select = mapFirst(getAttr("hf-select"), submitters)
     if (select) {
@@ -187,10 +184,13 @@ function executeScripts(container) {
         newScript.appendChild(doc.createTextNode(oldScript.innerHTML))
         oldScript.replaceWith(newScript)
         publishScriptLoad(container, newScript)
-        publish(container, "hf:script-loaded", {
-            script: mapFirst(x => getAttribute(newScript, x), ["src", "id"])
-        }, 10)
     }
+}
+
+function publishScriptLoad(container, script) {
+    publish(container, "hf:script-load", {
+        script: mapFirst(x => getAttribute(script, x), ["src", "id"])
+    }, 10)
 }
 
 /** Recenter page depending on how updated data occurred. **/
