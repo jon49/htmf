@@ -41,7 +41,7 @@ content updates.
 Copy the file from the source code `public/html-form.js` or the minified version
 `public/html-form.min.js`.
 
-Or use `npm` `npm i html-form` and reference it like so `import "html-form"`
+Or use `npm` `npm i html-form` and reference it like so `import "html-form"`.
 
 ## Usage
 
