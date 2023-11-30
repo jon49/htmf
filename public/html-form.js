@@ -5,13 +5,13 @@
   let submitting = "hf-submitting";
   doc.addEventListener("submit", async (e) => {
     const active = doc.activeElement, form = e.target, submitter = e.submitter, originator = submitter ?? form;
-    if ([form, submitter].find(hasAttr("hf-ignore")))
+    const method = getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get";
+    if (method !== "get" || method !== "post" || [form, submitter].find(hasAttr("hf-ignore")))
       return;
     e.preventDefault();
     if (hasAttr(submitting)(form))
       return;
     setAttribute(form, submitting, "");
-    const method = getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get";
     let action = getAttribute(submitter, "formaction") ?? getAttribute(form, "action") ?? "";
     let url = new URL(action, location.origin);
     const eventData = { form, submitter, method, active, originator, action, url };
@@ -24,12 +24,10 @@
       };
       if (method === "post") {
         options.body = new URLSearchParams([...preData]);
-      } else if (method === "get") {
+      } else {
         for (let e2 of preData.entries()) {
           url.searchParams.append(...e2);
         }
-      } else {
-        return;
       }
       eventData.xhr = { url, options };
       await publish(originator, "hf:request-before", eventData);

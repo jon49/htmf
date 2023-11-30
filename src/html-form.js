@@ -9,16 +9,16 @@ doc.addEventListener("submit", async e => {
           submitter = e.submitter,
           originator = submitter ?? form
 
-    if ([form, submitter].find(hasAttr("hf-ignore"))) return
-    e.preventDefault()
-
-    if (hasAttr(submitting)(form)) return
-    setAttribute(form, submitting, "")
-
     const method =
         getAttribute(submitter, "formmethod")
         ?? getAttribute(form, "method")
         ?? "get"
+
+    if ((method !== "get" || method !== "post") || [form, submitter].find(hasAttr("hf-ignore"))) return
+    e.preventDefault()
+
+    if (hasAttr(submitting)(form)) return
+    setAttribute(form, submitting, "")
 
     let action =
         getAttribute(submitter, "formaction")
@@ -39,13 +39,11 @@ doc.addEventListener("submit", async e => {
 
         if (method === "post") {
             options.body = new URLSearchParams([...preData])
-        } else if (method === "get") {
+        // "get"
+        } else {
             for (let e of preData.entries()) {
                 url.searchParams.append(...e)
             }
-        } else {
-            // dialog, etc
-            return
         }
 
         eventData.xhr = { url, options }

@@ -269,9 +269,11 @@ treated for that response.
 
 ## Version
 
-### 0.7.3
+### 0.7.3/4
 
 Fixed event to match documented event naming.
+
+Fixed `preventDefault` being called for `dialog` method.
 
 ### 0.7.1
 
