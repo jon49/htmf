@@ -14,7 +14,9 @@ doc.addEventListener("submit", async e => {
         ?? getAttribute(form, "method")
         ?? "get"
 
-    if ((method !== "get" || method !== "post") || [form, submitter].find(hasAttr("hf-ignore"))) return
+    if (
+        !(method === "get" || method === "post")
+        || [form, submitter].find(hasAttr("hf-ignore"))) return
     e.preventDefault()
 
     if (hasAttr(submitting)(form)) return

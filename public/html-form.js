@@ -6,7 +6,7 @@
   doc.addEventListener("submit", async (e) => {
     const active = doc.activeElement, form = e.target, submitter = e.submitter, originator = submitter ?? form;
     const method = getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get";
-    if (method !== "get" || method !== "post" || [form, submitter].find(hasAttr("hf-ignore")))
+    if (!(method === "get" || method === "post") || [form, submitter].find(hasAttr("hf-ignore")))
       return;
     e.preventDefault();
     if (hasAttr(submitting)(form))
