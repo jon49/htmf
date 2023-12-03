@@ -73,8 +73,8 @@ doc.addEventListener("submit", async e => {
             await publish(originator, "hf:response-error", eventData)
         }
 
-        if (response.status === 205) {
-            form.reset()
+        if (response.headers.has("hf-reset")) {
+            form.reset();
         }
 
         let maybeEvents = response.headers.get("hf-events")

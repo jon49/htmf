@@ -51,7 +51,7 @@
       } else if (!response.ok) {
         await publish(originator, "hf:response-error", eventData);
       }
-      if (response.status === 205) {
+      if (response.headers.has("hf-reset")) {
         form.reset();
       }
       let maybeEvents = response.headers.get("hf-events");

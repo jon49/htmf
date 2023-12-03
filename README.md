@@ -241,6 +241,10 @@ client side.
 hf-events: {"eventName1": {"detail1": "value1"}, "eventName2": {"detail2": "value2"}}
 ```
 
+#### `hf-reset`
+
+This will reset the submitting form.
+
 ### Special response status
 
 When a response is given outside of a 200 response a special handler will be
@@ -260,22 +264,19 @@ treated for that response.
     - **Description:** This will do nothing. This is useful for sending a custom
       event with a response to the user, e.g., letting the user know the
       information was saved.
-3. `205 Reset Content`
-    - **Description:** This will reset the content in the form. You can also
-      send back events to go along with this.
-4. Redirected
+3. Redirected
     - **Description:** This will redirect the page to the specified response
       URL.
 
 ## Version
 
-### 0.7.3/4
+### 0.7.*
+
+Fixed how a form reset is done.
 
 Fixed event to match documented event naming.
 
 Fixed `preventDefault` being called for `dialog` method.
-
-### 0.7.1
 
 Fixed bugs which occurred during the rewrite.
 
