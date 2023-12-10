@@ -10,9 +10,9 @@ doc.addEventListener("submit", async e => {
           originator = submitter ?? form
 
     const method =
-        getAttribute(submitter, "formmethod")
+        (getAttribute(submitter, "formmethod")
         ?? getAttribute(form, "method")
-        ?? "get"
+        ?? "get").toLowerCase()
 
     if (
         !(method === "get" || method === "post")
@@ -27,7 +27,7 @@ doc.addEventListener("submit", async e => {
         ?? getAttribute(form, "action")
         ?? ""
 
-    let url = new URL(action, location.origin)
+    let url = new URL(action, w.location.origin)
 
     const eventData = { form, submitter, method, active, originator, action, url }
 
