@@ -27,7 +27,7 @@ doc.addEventListener("submit", async e => {
         ?? getAttribute(form, "action")
         ?? ""
 
-    let url = new URL(action, w.location.origin)
+    let url = new URL(action, w.location)
 
     const eventData = { form, submitter, method, active, originator, action, url }
 
