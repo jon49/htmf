@@ -149,7 +149,7 @@ function htmlSwap({text, form, submitter}) {
             }
             break
         case "select":
-            let $newSelects = Array.from(getHtml(text).querySelectorAll(select))
+            let $newSelects = Array.from((typeof text === "string" ? getHtml(text) : text).querySelectorAll(select))
             let $oldSelects = Array.from(doc.querySelectorAll(select))
             for (let i = 0; i < $oldSelects.length; i++) {
                 let $new = $newSelects[i],
@@ -165,6 +165,18 @@ function htmlSwap({text, form, submitter}) {
 
     if(!submitters.find(hasAttr("hf-scroll-ignore"))) {
         onLoad()
+    }
+}
+
+function selectSwap(select, html, skipScripts = false) {
+    let $newSelects = Array.from(html.querySelectorAll(select))
+    let $oldSelects = Array.from(doc.querySelectorAll(select))
+    for (let i = 0; i < $oldSelects.length; i++) {
+        let $new = $newSelects[i],
+            $old = $oldSelects[i]
+        if (!$old || !$new) continue
+        $old.replaceWith($new)
+        if (!skipScripts) executeScripts($new)
     }
 }
 
@@ -324,5 +336,9 @@ function getHtml(text) {
     const template = doc.createElement("template")
     template.innerHTML = text
     return template.content
+}
+
+window.htmf = {
+    selectSwap,
 }
 

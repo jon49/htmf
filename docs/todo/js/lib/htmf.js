@@ -6,7 +6,7 @@
   let submitting = "hf-submitting";
   doc.addEventListener("submit", async (e) => {
     const active = doc.activeElement, form = e.target, submitter = e.submitter, originator = submitter ?? form;
-    const method = getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get";
+    const method = (getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get").toLowerCase();
     if (!(method === "get" || method === "post") || [form, submitter].find(hasAttr("hf-ignore")))
       return;
     e.preventDefault();
@@ -14,7 +14,7 @@
       return;
     setAttribute(form, submitting, "");
     let action = getAttribute(submitter, "formaction") ?? getAttribute(form, "action") ?? "";
-    let url = new URL(action, location.origin);
+    let url = new URL(action, w.location);
     const eventData = { form, submitter, method, active, originator, action, url };
     try {
       const preData = new FormData(form);
@@ -116,7 +116,7 @@
         }
         break;
       case "select":
-        let $newSelects = Array.from(getHtml(text).querySelectorAll(select));
+        let $newSelects = Array.from((typeof text === "string" ? getHtml(text) : text).querySelectorAll(select));
         let $oldSelects = Array.from(doc.querySelectorAll(select));
         for (let i = 0; i < $oldSelects.length; i++) {
           let $new = $newSelects[i], $old = $oldSelects[i];
@@ -131,6 +131,18 @@
     }
     if (!submitters.find(hasAttr("hf-scroll-ignore"))) {
       onLoad();
+    }
+  }
+  function selectSwap(select, html, skipScripts = false) {
+    let $newSelects = Array.from(html.querySelectorAll(select));
+    let $oldSelects = Array.from(doc.querySelectorAll(select));
+    for (let i = 0; i < $oldSelects.length; i++) {
+      let $new = $newSelects[i], $old = $oldSelects[i];
+      if (!$old || !$new)
+        continue;
+      $old.replaceWith($new);
+      if (!skipScripts)
+        executeScripts($new);
     }
   }
   let scripts = /* @__PURE__ */ new Set();
@@ -262,4 +274,7 @@
     template.innerHTML = text;
     return template.content;
   }
+  window.htmf = {
+    selectSwap
+  };
 })();

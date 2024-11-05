@@ -7,7 +7,7 @@
     "bugs": {
         "url": "https://github.com/jon49/htmf/issues"
     },
-    "version": "0.8.0",
+    "version": "0.9.2",
     "main": "src/html-form.js",
     "scripts": {
         "start": "npm run clean && npm run make-dirs && npm run static && esbuild --format=esm --watch --outdir=docs/todo --bundle --servedir=docs/todo ./src-todo/sw.ts",
