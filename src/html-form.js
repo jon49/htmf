@@ -303,7 +303,7 @@ async function publish(el, eventName, detail, wait) {
 }
 
 function run(method, el) {
-    el && el[method] instanceof Function && el[method]()
+    el?.[method] instanceof Function && el[method]()
 }
 
 function mapFirst(fn, xs) {
@@ -340,5 +340,6 @@ function getHtml(text) {
 
 window.htmf = {
     selectSwap,
+    publish,
 }
 

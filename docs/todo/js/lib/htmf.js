@@ -246,7 +246,7 @@
     return;
   }
   function run(method, el) {
-    el && el[method] instanceof Function && el[method]();
+    el?.[method] instanceof Function && el[method]();
   }
   function mapFirst(fn, xs) {
     for (let x of xs) {
@@ -275,6 +275,7 @@
     return template.content;
   }
   window.htmf = {
-    selectSwap
+    selectSwap,
+    publish
   };
 })();
