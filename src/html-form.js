@@ -20,7 +20,7 @@ doc.addEventListener("submit", async e => {
     e.preventDefault()
 
     if (hasAttr(submitting)(submitter ?? form)) return
-    setAttribute(submitter ?? form, submitting, "")
+    setAttribute(originator, submitting, "")
 
     let action =
         getAttribute(submitter, "formaction")
@@ -96,7 +96,7 @@ doc.addEventListener("submit", async e => {
 
     } finally {
 
-        form.removeAttribute(submitting)
+        originator.removeAttribute(submitting)
         await publish(originator, "hf:completed", eventData)
 
     }
@@ -111,11 +111,12 @@ function htmlSwap({text, form, submitter}) {
     let target = mapFirst(getAttr("hf-target"), submitters)
     let swap = mapFirst(getAttr("hf-swap"), submitters) ?? "innerHTML"
     let select = mapFirst(getAttr("hf-select"), submitters)
+    let originator = submitter ?? form
     if (select) {
         swap = "select"
     }
 
-    let $target = (target ? query(target) : form) ?? form
+    let $target = (target ? query(target) : originator) ?? originator
 
     switch (swap) {
         case "outerHTML":

@@ -11,7 +11,7 @@
     e.preventDefault();
     if (hasAttr(submitting)(submitter ?? form))
       return;
-    setAttribute(submitter ?? form, submitting, "");
+    setAttribute(originator, submitting, "");
     let action = getAttribute(submitter, "formaction") ?? getAttribute(form, "action") ?? "";
     let url = new URL(action, w.location);
     const eventData = { form, submitter, method, active, originator, action, url };
@@ -66,7 +66,7 @@
       setAttribute(form, "method", eventData.method);
       run("submit", form);
     } finally {
-      form.removeAttribute(submitting);
+      originator.removeAttribute(submitting);
       await publish(originator, "hf:completed", eventData);
     }
   });
@@ -78,10 +78,11 @@
     let target = mapFirst(getAttr("hf-target"), submitters);
     let swap = mapFirst(getAttr("hf-swap"), submitters) ?? "innerHTML";
     let select = mapFirst(getAttr("hf-select"), submitters);
+    let originator = submitter ?? form;
     if (select) {
       swap = "select";
     }
-    let $target = (target ? query(target) : form) ?? form;
+    let $target = (target ? query(target) : originator) ?? originator;
     switch (swap) {
       case "outerHTML":
       case "innerHTML":
