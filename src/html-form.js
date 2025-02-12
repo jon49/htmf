@@ -19,8 +19,8 @@ doc.addEventListener("submit", async e => {
         || [form, submitter].find(hasAttr("hf-ignore"))) return
     e.preventDefault()
 
-    if (hasAttr(submitting)(form)) return
-    setAttribute(form, submitting, "")
+    if (hasAttr(submitting)(submitter ?? form)) return
+    setAttribute(submitter ?? form, submitting, "")
 
     let action =
         getAttribute(submitter, "formaction")

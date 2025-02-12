@@ -270,6 +270,12 @@ treated for that response.
 
 ## Version
 
+### 0.10.0
+
+Prefer submitter over form for preventing repeat submissions before the previous
+submission is completed. This allows for buttons to share a form and be
+indepedent.
+
 ### 0.7.*
 
 Fixed how a form reset is done.

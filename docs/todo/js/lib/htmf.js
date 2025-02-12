@@ -10,9 +10,9 @@
     if (!(method === "get" || method === "post") || [form, submitter].find(hasAttr("hf-ignore")))
       return;
     e.preventDefault();
-    if (hasAttr(submitting)(form))
+    if (hasAttr(submitting)(submitter ?? form))
       return;
-    setAttribute(form, submitting, "");
+    setAttribute(submitter ?? form, submitting, "");
     let action = getAttribute(submitter, "formaction") ?? getAttribute(form, "action") ?? "";
     let url = new URL(action, w.location);
     const eventData = { form, submitter, method, active, originator, action, url };
