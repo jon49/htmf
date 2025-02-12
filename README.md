@@ -270,7 +270,9 @@ treated for that response.
 
 ## Version
 
-### 0.10.0
+### 0.10.*
+
+Fix bugs from the change.
 
 Prefer submitter over form for preventing repeat submissions before the previous
 submission is completed. This allows for buttons to share a form and be
