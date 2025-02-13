@@ -108,7 +108,7 @@ function htmlSwap({text, form, submitter}) {
     beforeUnload(submitter, form)
 
     let submitters = [submitter, form]
-    let target = mapFirst(getAttr("hf-target"), submitters)
+    let [target, targetEl] = mapFirst(getAttrAndEl("hf-target"), submitters)
     let swap = mapFirst(getAttr("hf-swap"), submitters) ?? "innerHTML"
     let select = mapFirst(getAttr("hf-select"), submitters)
     let originator = submitter ?? form
@@ -116,7 +116,12 @@ function htmlSwap({text, form, submitter}) {
         swap = "select"
     }
 
-    let $target = (target ? query(target) : originator) ?? originator
+    let $target = (
+        target === "this"
+            ? targetEl
+        : target
+            ? query(target)
+        : originator) ?? originator
 
     switch (swap) {
         case "outerHTML":
@@ -319,6 +324,13 @@ function hasAttr(attribute) {
         el?.hasAttribute(attribute)
 }
 
+function getAttrAndEl(attributeName) {
+    return el => {
+        if (hasAttr(attributeName)(el)) {
+            return [getAttr(attributeName)(el), el]
+        }
+    }
+}
 
 function getAttr(attributeName) {
     return el => getAttribute(el, attributeName)
@@ -343,4 +355,3 @@ window.htmf = {
     selectSwap,
     publish,
 }
-

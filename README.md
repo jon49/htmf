@@ -272,6 +272,8 @@ treated for that response.
 
 ### 0.10.*
 
+In target allow value "this" to target the same element as the target.
+
 Fix bugs from the change.
 
 Prefer submitter over form for preventing repeat submissions before the previous
