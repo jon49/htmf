@@ -7,7 +7,8 @@ doc.addEventListener("submit", async e => {
     const active = doc.activeElement,
           form = e.target,
           submitter = e.submitter,
-          originator = submitter ?? form
+          originator = submitter ?? form,
+          submitters = [form, submitter]
 
     const method =
         (getAttribute(submitter, "formmethod")
@@ -16,7 +17,9 @@ doc.addEventListener("submit", async e => {
 
     if (
         !(method === "get" || method === "post")
-        || [form, submitter].find(hasAttr("hf-ignore"))) return
+        || !(submitters.find(hasAttr("hf-target")) || submitters.find(hasAttr("hf-select")))
+        || submitters.find(hasAttr("hf-ignore"))
+    ) return
     e.preventDefault()
 
     if (hasAttr(submitting)(submitter ?? form)) return

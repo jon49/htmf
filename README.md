@@ -8,7 +8,7 @@ which works without JavaScript and the JS is just progressive enhancement.
 I have successfully created offline-first applications with this library. I have
 also successfully used it to create an offline-first, SPA, PWA application.
 
-`htmf` is 4.1 kB minified and 2.2 kB minified and zipped.
+`htmf` is 4.5 kB minified and 2.4 kB minified and zipped.
 
 A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
 
@@ -58,7 +58,8 @@ extensibility to meet different use cases.
 1. `hf-ignore`
 
 - **Description:** Prevents the associated form or submitter element from being
-processed by the HTML Form Handler.
+processed by the HTML Form Handler. **Note:** If neither `hf-target` nor `hf-select`
+are present then the form will also be ignored.
 - **Usage:**
     - Add hf-ignore attribute to a form or submit button.
 
@@ -269,6 +270,11 @@ treated for that response.
       URL.
 
 ## Version
+
+### 0.11.*
+
+Ignore submissions which do not include one of the attributes `hf-target` or
+`hf-select`.
 
 ### 0.10.*
 

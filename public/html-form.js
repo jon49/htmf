@@ -4,9 +4,9 @@
   let query = doc.querySelector.bind(doc);
   let submitting = "hf-submitting";
   doc.addEventListener("submit", async (e) => {
-    const active = doc.activeElement, form = e.target, submitter = e.submitter, originator = submitter ?? form;
+    const active = doc.activeElement, form = e.target, submitter = e.submitter, originator = submitter ?? form, submitters = [form, submitter];
     const method = (getAttribute(submitter, "formmethod") ?? getAttribute(form, "method") ?? "get").toLowerCase();
-    if (!(method === "get" || method === "post") || [form, submitter].find(hasAttr("hf-ignore")))
+    if (!(method === "get" || method === "post") || !(submitters.find(hasAttr("hf-target")) || submitters.find(hasAttr("hf-select"))) || submitters.find(hasAttr("hf-ignore")))
       return;
     e.preventDefault();
     if (hasAttr(submitting)(submitter ?? form))
