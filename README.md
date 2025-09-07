@@ -273,6 +273,11 @@ treated for that response.
 
 ### 0.11.*
 
+Removed constraint on only allowing POST and GET calls.
+Added ability to cancel swap.
+Added ability to opt-in with just an "hf" attribute.
+Added ability to use a different swapping mechanism.
+
 Ignore submissions which do not include one of the attributes `hf-target` or
 `hf-select`.
 

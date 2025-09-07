@@ -15,11 +15,11 @@ doc.addEventListener("submit", async e => {
         ?? getAttribute(form, "method")
         ?? "get").toLowerCase()
 
-    if (
-        !(method === "get" || method === "post")
-        || !(submitters.find(hasAttr("hf-target")) || submitters.find(hasAttr("hf-select")))
+    if (!(["hf-target", "hf-select", "hf"].find(x => submitters.find(hasAttr(x))))
         || submitters.find(hasAttr("hf-ignore"))
-    ) return
+    ) {
+        return
+    }
     e.preventDefault()
 
     if (hasAttr(submitting)(submitter ?? form)) return
@@ -42,13 +42,12 @@ doc.addEventListener("submit", async e => {
             credentials: "same-origin",
             headers: new Headers({ "HF-Request": "true" }) }
 
-        if (method === "post") {
-            options.body = new URLSearchParams([...preData])
-        // "get"
-        } else {
+        if (method === "get") {
             for (let e of preData.entries()) {
                 url.searchParams.append(...e)
             }
+        } else {
+            options.body = new URLSearchParams([...preData])
         }
 
         eventData.xhr = { url, options }
@@ -70,8 +69,9 @@ doc.addEventListener("submit", async e => {
         } else if (contentType?.includes("html")) {
             let text = await response.text()
             let data =  { ...eventData, text }
-            await publish(originator, "hf:swap", data)
-            htmlSwap(data)
+            if (await publish(originator, "hf:swap", data)) {
+                htmlSwap(data)
+            }
         } else if (!response.ok) {
             await publish(originator, "hf:response-error", eventData)
         }
@@ -104,6 +104,8 @@ doc.addEventListener("submit", async e => {
 
     }
 })
+
+let swapOption = {}
 
 function htmlSwap({text, form, submitter}) {
     if (text == null) return
@@ -169,7 +171,11 @@ function htmlSwap({text, form, submitter}) {
             }
             break
         default:
-            console.warn(`Unknown swap type: "${swap}".`)
+            if (swapOption[swap] instanceof Function) {
+                swapOption[swap]($target, text)
+            } else {
+                console.warn(`Unknown swap type: "${swap}".`)
+            }
     }
 
     if(!submitters.find(hasAttr("hf-scroll-ignore"))) {
@@ -307,8 +313,7 @@ async function publish(el, eventName, detail, wait) {
     }
     let result = el.dispatchEvent(new CustomEvent(eventName, { bubbles: true, cancelable: true, detail }))
     if (detail?.wait) await detail.wait()
-    if (!result) return Promise.reject()
-    return
+    return result
 }
 
 function run(method, el) {
@@ -355,6 +360,7 @@ function getHtml(text) {
 }
 
 window.htmf = {
-    selectSwap,
     publish,
+    selectSwap,
+    swapOption,
 }
