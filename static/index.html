@@ -3,11 +3,11 @@
 <head>
   <title>HTMF test suite</title>
 
-  <script src="/js/sw-loader.js"></script>
-  <script src="/html-form.js"></script>
-  <script src="/js/test-framework.js"></script>
+  <script src="./js/sw-loader.js"></script>
+  <script src="./html-form.js"></script>
+  <script src="./js/test-framework.js"></script>
 
-  <link href="/css/test.css" rel="stylesheet">
+  <link href="./css/test.css" rel="stylesheet">
 </head>
 
 <body>
@@ -34,7 +34,7 @@
             })
           })
         </script>
-        <form action="/demo/" hf>
+        <form action="./demo/" hf>
           <button>Button</button>
         </form>
       </div>
@@ -43,7 +43,7 @@
         <h3>Test basic button works when added dynamically</h3>
         <script>
           test($ => {
-            $.node.insertAdjacentHTML('beforeEnd', `<form action="/demo/" hf><button>Button 1</button></form>`)
+            $.node.insertAdjacentHTML('beforeEnd', `<form action="./demo/" hf><button>Button 1</button></form>`)
             let button = $.find('button')
             button.click()
             $.on(document, "hf:completed", e => {
@@ -68,7 +68,7 @@
             })
           })
         </script>
-        <button form="get" hf-target="#output1" formaction="/demo/">
+        <button form="get" hf-target="#output1" formaction="./demo/">
           Button 1
         </button>
         <output id="output1">
@@ -91,7 +91,7 @@
             })
           })
         </script>
-        <button form="get" formaction="/demo/" hf-swap="afterend">
+        <button form="get" formaction="./demo/" hf-swap="afterend">
           Button 1
         </button>
       </div>
@@ -110,7 +110,7 @@
             })
           })
         </script>
-        <button form="get" formaction="/demo/" hf-swap="innerHTML">
+        <button form="get" formaction="./demo/" hf-swap="innerHTML">
           Button 1
         </button>
       </div>
@@ -129,7 +129,7 @@
             })
           })
         </script>
-        <button form="get" formaction="/demo/" hf-swap="none">
+        <button form="get" formaction="./demo/" hf-swap="none">
           Button 1
         </button>
       </div>
@@ -148,7 +148,7 @@
             })
           })
         </script>
-        <button form="get" formaction="/demo/" hf-swap="beforebegin">
+        <button form="get" formaction="./demo/" hf-swap="beforebegin">
           Button 1
         </button>
       </div>
@@ -174,7 +174,7 @@
             })
           })
         </script>
-        <button form="get" formaction="/demo2/">
+        <button form="get" formaction="./demo2/">
           Button 1
         </button>
       </div>
@@ -200,7 +200,7 @@
             })
           })
         </script>
-        <button form="get" formaction="/demo3/">
+        <button form="get" formaction="./demo3/">
           Button 1
         </button>
       </div>
@@ -226,7 +226,7 @@
             })
           })
         </script>
-        <button form="get" formaction="/demo4/">
+        <button form="get" formaction="./demo4/">
           Button 1
         </button>
       </div>
@@ -243,7 +243,7 @@
             button.click();
           })
         </script>
-        <form hf action="/demo/">
+        <form hf action="./demo/">
           <input type="text" name="foo" value="bar">
           <button>Button 1</button>
         </form>
@@ -261,7 +261,7 @@
             button.click();
           })
         </script>
-        <form hf action="/demo/?baz=bloop">
+        <form hf action="./demo/?baz=bloop">
           <input type="text" name="foo" value="bar">
           <button>
             Button 1
@@ -275,14 +275,14 @@
           test($ => {
             let button = $.find("button")
             $.on(button, "hf:before", e => {
-              $.assertEq(e.detail.url.pathname, "/demo/");
+              $.assertEq(e.detail.url.pathname, "./demo/");
               $.assertEq(e.detail.body.has('foo'), true);
               $.off()
             })
             button.click();
           })
         </script>
-        <form hf action="/demo/" method="post">
+        <form hf action="./demo/" method="post">
           <input type="text" name="foo" value="bar">
           <button>Button 1</button>
         </form>
@@ -332,7 +332,7 @@
             })
           })
         </script>
-        <input form="get" type="submit" formaction="/demo/" value="Button 1">
+        <input form="get" type="submit" formaction="./demo/" value="Button 1">
       </div>
 
     </section>
@@ -361,7 +361,7 @@
                 button.click();
               })
             </script>
-            <button form="get" formaction="/demo/">Button 1</button>
+            <button form="get" formaction="./demo/">Button 1</button>
         </div>
 
         <div class="test">
@@ -385,7 +385,7 @@
                 button.click();
               })
             </script>
-            <button form="get" formaction="/demo/">Button 1</button>
+            <button form="get" formaction="./demo/">Button 1</button>
 
         </div>
 
@@ -401,7 +401,7 @@
                 })
               })
             </script>
-            <button form="get" formaction="/demo/" hf-swap="innerHTML">Button 1</button>
+            <button form="get" formaction="./demo/" hf-swap="innerHTML">Button 1</button>
         </div>
 
         <div class="test">
@@ -421,7 +421,7 @@
                 $.assertEq($.find('div'), null);
               })
             </script>
-            <button form="get" formaction="/demo/">Button 1</button>
+            <button form="get" formaction="./demo/">Button 1</button>
         </div>
 
         <div class="test">
@@ -440,7 +440,7 @@
                 })
               })
             </script>
-            <button form="get" formaction="/demo/" hf-swap="swapMe">Button 1</button>
+            <button form="get" formaction="./demo/" hf-swap="swapMe">Button 1</button>
         </div>
 
         <div class="test">
@@ -458,7 +458,7 @@
               })
             </script>
             <div id="parent-div">
-                <button form="get" formaction="/demo/" hf-target="#parent-div">
+                <button form="get" formaction="./demo/" hf-target="#parent-div">
                     Button 1
                 </button>
             </div>
