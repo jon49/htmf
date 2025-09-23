@@ -275,7 +275,7 @@
           test($ => {
             let button = $.find("button")
             $.on(button, "hf:before", e => {
-              $.assertEq(e.detail.url.pathname, "./demo/");
+              $.assertEq(e.detail.url.pathname.endsWith("/demo/"), true);
               $.assertEq(e.detail.body.has('foo'), true);
               $.off()
             })
