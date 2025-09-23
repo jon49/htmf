@@ -1,14 +1,13 @@
 export function routeHandler(url) {
-  switch(url.pathname) {
-    case "/demo/":
-      return htmlResponse("<div>Foo</div>")
-    case "/demo2/":
-      return htmlResponse("<button form=get formaction='/demo'>Button 2</button>")
-    case "/demo3/":
-      return htmlResponse("content <button form=get formaction='/demo'>Button 2</button> content")
-    case "/demo4/":
-      return htmlResponse("<p><button form=get formaction='/demo'>Button 2</button></p>")
-  }
+  return url.pathname.endsWith("/demo/")
+      ? htmlResponse("<div>Foo</div>")
+    : url.pathname.endsWith("/demo2/")
+      ? htmlResponse("<button form=get formaction='/demo'>Button 2</button>")
+    : url.pathname.endsWith("/demo3/")
+      ? htmlResponse("content <button form=get formaction='/demo'>Button 2</button> content")
+    : url.pathname.endsWith("/demo4/")
+      ? htmlResponse("<p><button form=get formaction='/demo'>Button 2</button></p>")
+    : null
 }
 
 function htmlResponse(str) {
