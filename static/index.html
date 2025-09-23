@@ -1,0 +1,475 @@
+<html lang="en">
+
+<head>
+  <title>HTMF test suite</title>
+
+  <script src="/js/sw-loader.js"></script>
+  <script src="/html-form.js"></script>
+  <script src="/js/test-framework.js"></script>
+
+  <link href="/css/test.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <h1>&Hfr;&Ffr; HTML-FORM test suite</h1>
+  </header>
+
+  <main>
+    <section id="core">
+      <h2>Core</h2>
+
+      <div class="test">
+        <h3>Test basic button works</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(document, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('div')?.innerText, "Foo", true)
+                $.off()
+              }
+            })
+          })
+        </script>
+        <form action="/demo/" hf>
+          <button>Button</button>
+        </form>
+      </div>
+
+      <div class="test">
+        <h3>Test basic button works when added dynamically</h3>
+        <script>
+          test($ => {
+            $.node.insertAdjacentHTML('beforeEnd', `<form action="/demo/" hf><button>Button 1</button></form>`)
+            let button = $.find('button')
+            button.click()
+            $.on(document, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('div')?.innerText, "Foo", true)
+                $.off()
+              }
+            })
+          })
+        </script>
+      </div>
+
+      <div class="test">
+        <h3>Test basic target works</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(button, "hf:completed", e => {
+              $.assertEq($.find('div')?.innerText, "Foo", true);
+              $.off()
+            })
+          })
+        </script>
+        <button form="get" hf-target="#output1" formaction="/demo/">
+          Button 1
+        </button>
+        <output id="output1">
+          Bar
+        </output>
+      </div>
+
+      <div class="test">
+        <h3>Test basic target works</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(button, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('button')?.innerText, "Button 1", true);
+                $.assertEq($.find('div')?.innerText, "Foo", true);
+                $.off()
+              }
+            })
+          })
+        </script>
+        <button form="get" formaction="/demo/" hf-swap="afterend">
+          Button 1
+        </button>
+      </div>
+
+      <div class="test">
+        <h3>Test basic button with inner swap works</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(button, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('button')?.innerText, "Foo", true);
+                $.off()
+              }
+            })
+          })
+        </script>
+        <button form="get" formaction="/demo/" hf-swap="innerHTML">
+          Button 1
+        </button>
+      </div>
+
+      <div class="test">
+        <h3>Test basic button with none swap works</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(button, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('button')?.innerText, "Button 1", true);
+                $.off()
+              }
+            })
+          })
+        </script>
+        <button form="get" formaction="/demo/" hf-swap="none">
+          Button 1
+        </button>
+      </div>
+
+      <div class="test">
+        <h3>Test basic button with beforebegin swap works</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(button, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('button')?.previousElementSibling?.innerText, "Foo", true);
+                $.off()
+              }
+            })
+          })
+        </script>
+        <button form="get" formaction="/demo/" hf-swap="beforebegin">
+          Button 1
+        </button>
+      </div>
+
+      <div class="test">
+        <h3>Test added content is live</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(document, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('button')?.innerText, "Button 2", true);
+                let button2 = $.find('button')
+                button2.click();
+                $.on(document, "hf:completed", e => {
+                  if (e.detail.submitter === button2) {
+                    $.assertEq($.find('div')?.innerText, "Foo", true);
+                    $.off()
+                  }
+                })
+              }
+            })
+          })
+        </script>
+        <button form="get" formaction="/demo2/">
+          Button 1
+        </button>
+      </div>
+
+      <div class="test">
+        <h3>Test added content with text around it is live</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(document, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('button')?.innerText, "Button 2", true);
+                let button = $.find('button')
+                button.click();
+                $.on(document, "hf:completed", e => {
+                  if (e.detail.submitter === button) {
+                    $.assertEq($.find('div')?.innerText, "Foo", true);
+                    $.off()
+                  }
+                })
+              }
+            })
+          })
+        </script>
+        <button form="get" formaction="/demo3/">
+          Button 1
+        </button>
+      </div>
+
+      <div class="test">
+        <h3>Test nested added content is live</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(document, "hf:completed", e => {
+              if (e.detail.submitter === button) {
+                $.assertEq($.find('button')?.innerText, "Button 2", true);
+                let button = $.find('button')
+                button.click();
+                $.on(document, "hf:completed", e => {
+                  if (e.detail.submitter === button) {
+                    $.assertEq($.find('div')?.innerText, "Foo", true);
+                    $.off()
+                  }
+                })
+              }
+            })
+          })
+        </script>
+        <button form="get" formaction="/demo4/">
+          Button 1
+        </button>
+      </div>
+
+      <div class="test">
+        <h3>GET url encodes parameters</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            $.on(button, "hf:before", e => {
+              $.assertEq(e.detail.url.searchParams.get("foo"), "bar");
+              $.off()
+            })
+            button.click();
+          })
+        </script>
+        <form hf action="/demo/">
+          <input type="text" name="foo" value="bar">
+          <button>Button 1</button>
+        </form>
+      </div>
+
+      <div class="test">
+        <h3>GET url encodes parameters and appends when existing params</h3>
+        <script>
+          test($ => {
+            let button = $.find("button")
+            $.on(button, "hf:before", e => {
+              $.assertEq(e.detail.url.search, "?baz=bloop&foo=bar");
+              $.off()
+            })
+            button.click();
+          })
+        </script>
+        <form hf action="/demo/?baz=bloop">
+          <input type="text" name="foo" value="bar">
+          <button>
+            Button 1
+          </button>
+        </form>
+      </div>
+
+      <div class="test">
+        <h3>POST does not url encodes parameters</h3>
+        <script>
+          test($ => {
+            let button = $.find("button")
+            $.on(button, "hf:before", e => {
+              $.assertEq(e.detail.url.pathname, "/demo/");
+              $.assertEq(e.detail.body.has('foo'), true);
+              $.off()
+            })
+            button.click();
+          })
+        </script>
+        <form hf action="/demo/" method="post">
+          <input type="text" name="foo" value="bar">
+          <button>Button 1</button>
+        </form>
+      </div>
+
+    </section>
+
+    <section id="web-components">
+
+      <script>
+        class TestWebComponent extends HTMLElement {
+          connectedCallback() {
+            this.innerHTML = this.getAttribute('data-inner-html');
+          }
+        }
+        customElements.define('test-web-component', TestWebComponent)
+      </script>
+
+      <h2>Web Components</h2>
+
+      <div class="test">
+        <h3>Works inside web components</h3>
+        <script>
+          test($ => {
+            let button = $.find('button')
+            button.click();
+            $.on(button, "hf:completed", e => {
+              $.assertEq(button.innerText, "Foo", true);
+              $.off()
+            })
+          })
+        </script>
+        <test-web-component data-inner-html="<button form=get formaction='/demo/' hf-swap='innerHTML'>Demo</button>"></test-web-component>
+      </div>
+
+      <div class="test">
+        <h3>Test button input works</h3>
+        <script>
+          test($ => {
+            let input = $.find('input')
+            input.click()
+            $.on(document, "hf:completed", e => {
+              if (e.detail.submitter === input) {
+                $.assertEq($.find('div')?.innerText, "Foo");
+                $.off()
+              }
+            })
+          })
+        </script>
+        <input form="get" type="submit" formaction="/demo/" value="Button 1">
+      </div>
+
+    </section>
+
+    <section id="events">
+        <h2>Events</h2>
+
+        <div class="test">
+            <h3>Test basic hf:before triggered</h3>
+            <script>
+              test($ => {
+                let triggered = false;
+                let button = $.find('button')
+                $.on(button, 'hf:before', e => {
+                  if (e.detail.submitter === button) {
+                    triggered = true;
+                  }
+                })
+                $.on(document, "hf:completed", e => {
+                  if (e.detail.submitter === button) {
+                    $.assertEq(triggered, true);
+                    $.assertEq($.find('div')?.innerText, "Foo");
+                    $.off()
+                  }
+                })
+                button.click();
+              })
+            </script>
+            <button form="get" formaction="/demo/">Button 1</button>
+        </div>
+
+        <div class="test">
+            <h3>Test basic hf:after triggered</h3>
+            <script>
+              test($ => {
+                let triggered = false;
+                let button = $.find('button')
+                $.on(button, 'hf:after', e => {
+                  if (e.detail.submitter === button) {
+                    triggered = true;
+                  }
+                })
+                $.on(document, "hf:completed", e => {
+                  if (e.detail.submitter === button) {
+                    $.assertEq(triggered, true);
+                    $.assertEq($.find('div')?.innerText, "Foo");
+                    $.off()
+                  }
+                })
+                button.click();
+              })
+            </script>
+            <button form="get" formaction="/demo/">Button 1</button>
+
+        </div>
+
+        <div class="test">
+            <h3>Test basic hf:completed triggered</h3>
+            <script>
+              test($ => {
+                let button = $.find("button")
+                button.click()
+                $.on(button, "hf:completed", e => {
+                  $.assertEq($.find("button").innerText, "Foo")
+                  $.off()
+                })
+              })
+            </script>
+            <button form="get" formaction="/demo/" hf-swap="innerHTML">Button 1</button>
+        </div>
+
+        <div class="test">
+            <h3>Test hf:before can cancel request</h3>
+            <script>
+              test(async $ => {
+                let triggered = false;
+                let button = $.find("button")
+                $.on(button, 'hf:before', e => {
+                  triggered = true;
+                  e.preventDefault();
+                  $.off()
+                })
+                button.click();
+                await sleep(10)
+                $.assertEq(triggered, true);
+                $.assertEq($.find('div'), null);
+              })
+            </script>
+            <button form="get" formaction="/demo/">Button 1</button>
+        </div>
+
+        <div class="test">
+            <h3>Test htmf.swapOption can be a function</h3>
+            <script>
+              test($ => {
+                htmf.swapOption.swapMe = option => {
+                  $.assertEq(true, true)
+                  option.target.innerHTML = option.text
+                }
+                let button = $.find('button')
+                button.click();
+                $.on(button, "hf:completed", e => {
+                  $.assertEq($.find('div').innerText, "Foo");
+                  $.off()
+                })
+              })
+            </script>
+            <button form="get" formaction="/demo/" hf-swap="swapMe">Button 1</button>
+        </div>
+
+        <div class="test">
+            <h3>Test hf:swapped is triggered on doc even if element replaces itself</h3>
+            <script>
+              test($ => {
+                let button = $.find("button")
+                $.on(document, "hf:swapped", e => {
+                  if (e.detail.submitter === button) {
+                    $.assertEq(true, true)
+                    $.off()
+                  }
+                })
+                button.click();
+              })
+            </script>
+            <div id="parent-div">
+                <button form="get" formaction="/demo/" hf-target="#parent-div">
+                    Button 1
+                </button>
+            </div>
+        </div>
+
+    </section>
+
+  </main>
+
+  <form id="get" hf></form>
+
+</body>
+
+</html>

@@ -7,26 +7,16 @@
     "bugs": {
         "url": "https://github.com/jon49/htmf/issues"
     },
-    "version": "0.11.1",
+    "version": "0.12.0",
     "main": "src/html-form.js",
     "scripts": {
-        "start": "npm run clean && npm run make-dirs && npm run static && esbuild --format=esm --watch --outdir=docs/todo --bundle --servedir=docs/todo ./src-todo/sw.ts",
-        "static": "cd ./src-todo/ && cp --parents `find . -name '*.js' -o -name '*.html' -o -name '*.css'` ../docs/todo && cd .. && npm run htmf && npm run todo && npm run app",
-        "htmf": "esbuild ./src/html-form.js --outfile=./docs/todo/js/lib/htmf.js --format=iife",
-        "todo": "cp ./node_modules/todomvc-app-css/index.css ./docs/todo/css/index.css && cp ./node_modules/todomvc-common/base.css ./docs/todo/css/base.css",
-        "make-dirs": "mkdir -p docs/todo/js docs/todo/css docs/todo/js/lib",
-        "app": "esbuild ./src-todo/js/app.ts --bundle --format=iife --outdir=docs/todo/js",
-        "clean": "rm -rf docs/todo",
-        "build": "npm run clean && npm run make-dirs && npm run static && esbuild --format=esm --outdir=docs/todo --bundle ./src-todo/sw.ts && ./tasks/build.nu"
+        "start": "./tasks/build.sh"
     },
     "dependencies": {
-        "html-template-tag-stream": "^1.1.2",
-        "idb-keyval": "^6.2.1",
-        "todomvc-app-css": "^2.0.0",
-        "todomvc-common": "^1.0.0"
+        "html-form-test-suite": "^0.0.0"
     },
     "devDependencies": {
-        "esbuild": "^0.17.19"
+        "esbuild": "^0.25.9"
     },
     "keywords": [
         "AJAX",

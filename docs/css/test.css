@@ -1,0 +1,25 @@
+.test {
+    padding: 8px;
+    margin: 8px;
+}
+.passed {
+    border: 3px solid green;
+}
+.failed {
+    border: 3px solid red;
+}
+.passed-info {
+    color: green;
+}
+.failed-info {
+    color: red;
+}
+pre {
+    padding: 4px;
+    margin: 12px;
+    border: 1px solid rgb(128, 128, 128);
+    background-color: whitesmoke;
+}
+body.hide-passed .passed {
+    display: none;
+}

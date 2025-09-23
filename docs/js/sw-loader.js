@@ -2,7 +2,7 @@
 (() => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-        .register(`${document.location.pathname}sw.js`)
+        .register(`${document.location.pathname}sw.js`, { type: "module" })
         .then(_ => {
             console.log("Service worker registered.")
         })
@@ -10,4 +10,3 @@
         alert("Service worker is not supported. Please use a modern browser.")
     }
 })()
-

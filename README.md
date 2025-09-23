@@ -1,16 +1,16 @@
 # HTML Form Handler
 
-`html-form` (htmf) is a minimalist library similar to HTMX and other
-technologies (Behavior.js (RIP), unpoly, etc.) designed to work directly with
-forms. It has a minimal API. It also makes it easy to build Multipage apps (MPA)
-which works without JavaScript and the JS is just progressive enhancement.
+`html-form` (`htmf`) is a minimalist library similar to HTMX and other
+technologies (Behavior.js (RIP), unpoly, fixi, etc.) designed to work directly
+with forms. It has a minimal API. It also makes it easy to build Multipage apps
+(MPA) which works without JavaScript and the JS is just progressive enhancement.
 
 I have successfully created offline-first applications with this library. I have
 also successfully used it to create an offline-first, SPA, PWA application.
 
-`htmf` is 4.5 kB minified and 2.4 kB minified and zipped.
+`htmf` is 1.9 kB minified and 1.3 kB minified and zipped.
 
-A Todo MVC example [can be found here](https://jon49.github.io/htmf/todo/#).
+Tests can be viewed here: <https://jon49.github.io/htmf/>
 
 ## Overview
 
@@ -29,15 +29,7 @@ content updates.
 3. Dynamic Content Updates:
     - Supports dynamic content updates based on the response from the server,
       including JSON and HTML responses.
-4. Script Execution:
-    - Handles script execution within the received HTML content to ensure proper
-      functionality.
-5. Scroll Management:
-    - Manages scroll positions before and after form submissions to provide a
-      seamless user experience.
-6. Event-Based Customization:
-    - Allows customization of various events like "hf:request-before,"
-      "hf:request-after," "hf:json," "hf:swap," and more.
+4. If you know HTML forms then you know how to use this library.
 
 ## Installation
 
@@ -48,6 +40,47 @@ Or use `npm` `npm i html-form` and reference it like so `import "html-form"`.
 
 ## Usage
 
+### Example
+
+When clicking the button below it will retrieve the HTML from `/foo` and replace
+the content in the `button` element.
+
+```html
+<form method="post" action="/foo" hf>
+  <button>Submit</button>
+</form>
+```
+
+This will replace the button element with the returned HTML from `/foo`. This
+uses a button outside of the defined `form`. Native HTML for the win!
+
+```html
+<button form="get" formaction="/foo" hf-swap="outerHTML">Submit</button>
+<form id="get" hidden></form>
+```
+
+This will replace the target element.
+
+```html
+<div id="myDiv">I will be replaced.</div>
+<button form="get" formaction="/foo" target="#myDiv" hf-swap="outerHTML">Submit</button>
+<form id="get" hidden></form>
+```
+
+### Extensions
+
+- `html-form-events`
+  - Create events from the reponse header.
+- `html-form-scroll`
+  - Auto scroll to where you were before when content changes.
+  - Target scroll position after changing content.
+- `html-form-confirm`
+  - When you would like to confirm a form submission.
+- `html-form-merge`
+  - This uses `Morphdom` to merge the two HTML DOM elements.
+  - This is useful when you start to have too many changes on the page to track.
+    Then you just merge it all with ease.
+
 ### HTML Form Handler Attributes
 
 The HTML Form Handler (HF) library utilizes custom attributes on HTML elements
@@ -55,11 +88,16 @@ to enable various functionalities and customize the behavior of form
 submissions. These attributes are designed to provide flexibility and
 extensibility to meet different use cases.
 
-1. `hf-ignore`
+1. `hf`
+
+- **Description:** HTMF is an opt-in library. You can use all of the normal form
+attributes and just add the attribute `hf` to enable it. Using `hf-swap` or
+`hf-target` will also enable the form.
+
+2. `hf-ignore`
 
 - **Description:** Prevents the associated form or submitter element from being
-processed by the HTML Form Handler. **Note:** If neither `hf-target` nor `hf-select`
-are present then the form will also be ignored.
+processed by the HTML Form Handler.
 - **Usage:**
     - Add hf-ignore attribute to a form or submit button.
 
@@ -71,10 +109,11 @@ are present then the form will also be ignored.
 <button type="submit" hf-ignore>Submit</button>
 ```
 
-2. `hf-target`
+3. `hf-target` or `target`
 
 - **Description:** Specifies the target element for swapping content. The
   library will update the content of this element based on the server response.
+  If you know that JS is enabled you can just use the `target` attribute instead.
 - **Usage:**
     - Add hf-target attribute to a form or submit button.
     - The value is a query selector targeting the element where the content
@@ -88,15 +127,17 @@ are present then the form will also be ignored.
 <button type="submit" hf-target=".result">Submit</button>
 ```
 
-3. `hf-swap`
+4. `hf-swap`
 
 - **Description:** Defines the type of content swapping to be performed. This
   attribute determines how the received HTML content should replace the target
   element.
 - **Usage:**
     - Add `hf-swap` attribute to a form or submit button.
-    - Possible values: `outerHTML`, `innerHTML`, `append`, `prepend`,
-      `beforebegin`, `afterbegin`, `beforeend`, `afterend`, `oob`.
+    - Possible values: `outerHTML`, `innerHTML`, `beforebegin`, `afterbegin`,
+      `beforeend`, `afterend`, `none`.
+    - Default is `outerHTML`. This can be overriden by placing the attribute in
+      the body with the desired swap type.
 
 ```html
 <form hf-swap="innerHTML">
@@ -106,108 +147,36 @@ are present then the form will also be ignored.
 <button type="submit" hf-swap="append">Submit</button>
 ```
 
-4. `hf-select`
-
-- **Description:** Specifies a query selector all for selecting specific
-  elements within the received HTML content to replace existing elements.
-- **Usage:**
-    - Add `hf-select` attribute to a form or submit button.
-
-```html
-<form hf-select=".select-container,#other-item">
-  <!-- Form content -->
-</form>
-
-<button type="submit" hf-select=".select-container,#other-item">Submit</button>
-```
-
-5. `hf-scroll-ignore`
-
-- **Description:** Prevents automatic scrolling after a form submission.
-- **Usage:**
-    - Add `hf-scroll-ignore` attribute to a form or submit button.
-
-```html
-<form hf-scroll-ignore>
-  <!-- Form content -->
-</form>
-
-<button type="submit" hf-scroll-ignore>Submit</button>
-```
-
-6. `hf-scroll-to`
-
-- **Description:** Specifies the element to which the page should scroll after a
-  form submission.
-- **Usage:**
-    - Add `hf-scroll-to` attribute to a form or submit button.
-    - The value is a query selector targeting the element to scroll to.
-
-```html
-<form hf-scroll-to="#result-section">
-  <!-- Form content -->
-</form>
-
-<button type="submit" hf-scroll-to=".result-section">Submit</button>
-```
-
-7. `hf-scroll-skip`
-
-- **Description:** Skips scrolling entirely after a form submission.
-- **Usage:**
-    - Add hf-scroll-skip attribute to the body element.
-
-```html
-<body hf-scroll-skip>
-  <!-- Page content -->
-</body>
-```
-
-8. `hf-focus-skip`
-
-- **Description:** Skips focusing on elements after a form submission.
-- **Usage:**
-    - Add `hf-focus-skip` attribute to form elements.
-
-```html
-<form hf-focus-skip>
-  <!-- Form content -->
-</form>
-```
-
 ### Eventing
 
-9. `hf:script-loaded`
+1. `hf:before`
 
-- **Description:** An event triggered after a script is successfully loaded.
+- **Description:** A cancelable event called befoe fetch is called.
 - **Usage:**
-    - Subscribe to the `hf:script-loaded` event.
+    - Subscribe to the `hf:before` event.
 
 ```javascript
-doc.addEventListener("hf:script-loaded", e => {
+doc.addEventListener("hf:before", e => {
   // Handle script-loaded event
 });
 ```
 
-10. `hf:request-before`, `hf:request-after`, `hf:json`, `hf:swap`,
-    `hf:response-error`, `hf:completed`
+2. `hf:after`
 
-- **Description:** Events triggered at different stages of the form submission
-  process.
-- **Usage:**
-    - Subscribe to these events for customization.
+- **Description:** A cancelable event called befoe fetch is called.
 
-```javascript
-doc.addEventListener("hf:json", e => {
-  // Handle JSON response event
-});
+3. `hf:swap`
 
-doc.addEventListener("hf:swap", e => {
-  // Handle content swap event
-});
+- **Description:** A cancelable event called when the text content from the
+fetched data is parsed and before the content is swapped.
 
-// ... and so on
-```
+3. `hf:swapped`
+
+- **Description:** A cancelable event called after the content was swapped.
+
+4. `hf:completed`
+
+- **Description:** Called when no other operations will be performed.
 
 ### Headers Sent to the Server
 
@@ -229,47 +198,29 @@ The HTML Form Handler library provides the ability to include custom headers in
 the server's response, facilitating additional information or actions on the
 client side.
 
-#### `hf-events`
-
-- **Description:** A custom header included in the server's response to specify
-  events to be triggered on the client side.
-- **Format:** JSON format containing event names as keys and corresponding event
-  details as values.
-
-**Example:**
-
-```css
-hf-events: {"eventName1": {"detail1": "value1"}, "eventName2": {"detail2": "value2"}}
-```
-
-#### `hf-reset`
-
-This will reset the submitting form.
-
 ### Special response status
 
 When a response is given outside of a 200 response a special handler will be
 treated for that response.
 
-1. `200 OK`
-    - **Description:** Indicates a successful response.
-    - **Handling:** The library processes the response based on its content
-      type.
-        - If the content type is JSON (application/json), it triggers the
-          `hf:json` event with the parsed JSON data.
-        - If the content type is HTML (text/html), it triggers the `hf:swap`
-          event with the received HTML content.
-        - For other content types, the library does not perform additional
-          handling.
-2. `204 No Content`
+1. `204 No Content`
     - **Description:** This will do nothing. This is useful for sending a custom
       event with a response to the user, e.g., letting the user know the
       information was saved.
-3. Redirected
+2. Redirected
     - **Description:** This will redirect the page to the specified response
       URL.
 
 ## Version
+
+### 0.12.*
+
+- Rewrite inspired by fixi.
+  - Removed scrolling (put in separate package).
+  - Removed script loading.
+  - Removed some of the swap types.
+  - Added `none` swap type.
+  - Removed handling anything but HTML content type.
 
 ### 0.11.*
 
