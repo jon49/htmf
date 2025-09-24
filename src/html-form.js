@@ -8,7 +8,7 @@ let send = (elt, type, detail, bub, prefix = null) => {
     return el.dispatchEvent(new CustomEvent(
         (prefix ?? "hf:") + type, {detail, cancelable:true, bubbles:bub !== false, composed:true}))
 }
-let attr = (elt, name, defaultVal) => elt.getAttribute(name) || defaultVal
+let attr = (elt, name, defaultVal) => elt?.getAttribute(name) || defaultVal
 let getAttr = (name, defaultVal) => elt => attr(elt, name, defaultVal)
 let setAttr = (el, attributeName, value) => el?.setAttribute(attributeName, value)
 let hasAttr = (attribute) => (el) => el?.hasAttribute(attribute)
