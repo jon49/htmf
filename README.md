@@ -149,8 +149,9 @@ processed by the HTML Form Handler.
 
 5. `hf-transition`
 
-When placed on the body element it enables view transitions. This behavior can
-also be overridden in the options settings.
+When placed on the body element it enables view transitions for all elements. It
+can also be enabled for each swap by adding it to the submitter or form.  This
+behavior can also be overridden in the options settings.
 
 ```html
 <body hf-transition>

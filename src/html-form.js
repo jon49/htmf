@@ -60,6 +60,10 @@ doc.addEventListener("submit", async e => {
             ?? []
         let swap = submitters.map(getAttr(hfSwap)).find(x => x) || attr(doc.body, hfSwap) || "outerHTML"
         let target = targetQuery && document.querySelector(targetQuery) || targetEl || submitter || form
+        let transition =
+            (hasAttr("hf-transition")(document.body)
+            || submitters.map(hasAttr("hf-transition")).find(x => x))
+            && transition
 
         options = {
             action,

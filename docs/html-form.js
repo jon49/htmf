@@ -48,6 +48,7 @@
       let [targetQuery, targetEl] = submitters.map(getAttrAndEl(hfTarget)).find((x) => x) ?? submitters.map(getAttrAndEl("target")).find((x) => x) ?? [];
       let swap = submitters.map(getAttr(hfSwap)).find((x) => x) || attr(doc.body, hfSwap) || "outerHTML";
       let target = targetQuery && document.querySelector(targetQuery) || targetEl || submitter || form;
+      let transition2 = (hasAttr("hf-transition")(document.body) || submitters.map(hasAttr("hf-transition")).find((x) => x)) && transition2;
       options = {
         action,
         active,
@@ -60,7 +61,7 @@
         submitter,
         swap,
         target,
-        transition: hasAttr("hf-transition")(document.body) && transition,
+        transition: hasAttr("hf-transition")(document.body) && transition2,
         url
       };
       if (method === "get") {
