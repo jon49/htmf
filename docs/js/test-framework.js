@@ -12,6 +12,9 @@ class Test {
 
     start() {
         this.code(this)
+        return new Promise(resolve => {
+            this.resolve = resolve
+        })
     }
 
     assertEq(actual, expected, trim) {
@@ -30,6 +33,7 @@ class Test {
         for (let [el, event, fn] of this.events) {
             el.removeEventListener(event, fn)
         }
+        this.resolve()
     }
 
     on(el, event, fn) {
@@ -86,7 +90,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         tests[testIndex]?.start()
     } else {
         for (let test of tests) {
-            test.start()
+            if (document.body.hasAttribute('serial')) {
+                await test.start()
+            } else {
+                test.start()
+            }
         }
     }
 });

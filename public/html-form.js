@@ -60,7 +60,7 @@
         submitter,
         swap,
         target,
-        transition,
+        transition: hasAttr("hf-transition")(document.body) && transition,
         url
       };
       if (method === "get") {

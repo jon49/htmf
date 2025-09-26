@@ -147,6 +147,17 @@ processed by the HTML Form Handler.
 <button type="submit" hf-swap="append">Submit</button>
 ```
 
+5. `hf-transition`
+
+When placed on the body element it enables view transitions. This behavior can
+also be overridden in the options settings.
+
+```html
+<body hf-transition>
+  ...
+</body>
+```
+
 ### Eventing
 
 1. `hf:before`
@@ -214,6 +225,8 @@ treated for that response.
 ## Version
 
 ### 0.12.*
+
+- Make view transitions opt-in
 
 - Rewrite inspired by fixi.
   - Removed scrolling (put in separate package).

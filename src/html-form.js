@@ -73,7 +73,7 @@ doc.addEventListener("submit", async e => {
             submitter,
             swap,
             target,
-            transition,
+            transition: hasAttr("hf-transition")(document.body) && transition,
             url,
         }
 
