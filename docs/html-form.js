@@ -17,15 +17,15 @@
   let getAttr = (name, defaultVal) => (elt) => attr(elt, name, defaultVal);
   let setAttr = (el, attributeName, value) => el?.setAttribute(attributeName, value);
   let hasAttr = (attribute) => (el) => el?.hasAttribute(attribute);
-  let transition = document.startViewTransition?.bind(document);
+  let transition = doc.startViewTransition?.bind(doc);
   let getAttrAndEl = (attributeName) => (el) => {
     let value = attr(el, attributeName);
     if (value) return [value, el];
   };
+  let query = (query2) => query2 && doc.querySelector(query2);
   let swapOption = {};
   let htmf = {
     swapOption,
-    fetch: w.fetch.bind(w),
     send,
     attr,
     hasAttr
@@ -46,9 +46,9 @@
     try {
       let preData = new FormData(form);
       let [targetQuery, targetEl] = submitters.map(getAttrAndEl(hfTarget)).find((x) => x) ?? submitters.map(getAttrAndEl("target")).find((x) => x) ?? [];
+      let target = targetQuery && query(targetQuery) || targetEl || submitter || form;
       let swap = submitters.map(getAttr(hfSwap)).find((x) => x) || attr(doc.body, hfSwap) || "outerHTML";
-      let target = targetQuery && document.querySelector(targetQuery) || targetEl || submitter || form;
-      let transition2 = (hasAttr("hf-transition")(document.body) || submitters.map(hasAttr("hf-transition")).find((x) => x)) && transition2;
+      let transition2 = (hasAttr("hf-transition")(doc.body) || submitters.map(hasAttr("hf-transition")).find((x) => x)) && transition2;
       options = {
         action,
         active,
@@ -61,7 +61,7 @@
         submitter,
         swap,
         target,
-        transition: hasAttr("hf-transition")(document.body) && transition2,
+        transition: hasAttr("hf-transition")(doc.body) && transition2,
         url
       };
       if (method === "get") {
@@ -72,9 +72,12 @@
         options.body = new URLSearchParams([...preData]);
       }
       if (!send(originator, "before", options)) return;
-      let response = options.response = await htmf.fetch(url, options);
+      let response = options.response = await (htmf.fetch?.(url, options) ?? fetch(url, options));
       if (!send(originator, "after", options)) return;
-      if (response.redirected && response.status > 299 && response.status < 400) {
+      let headerTargetQuery = response.headers.get(hfTarget);
+      target = options.target = query(headerTargetQuery) || target;
+      swap = options.swap = response.headers.get(hfSwap) || swap;
+      if (response.redirected && !headerTargetQuery) {
         location.href = response.url;
         return;
       }
@@ -98,7 +101,7 @@
         await doSwap();
       }
       send(originator, "swapped", options);
-      if (!document.contains(target)) send(doc, "swapped", options);
+      if (!doc.contains(target)) send(doc, "swapped", options);
     } catch (ex) {
       console.error(ex);
       if (submitter instanceof HTMLFormElement) {

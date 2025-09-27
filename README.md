@@ -210,6 +210,16 @@ The HTML Form Handler library provides the ability to include custom headers in
 the server's response, facilitating additional information or actions on the
 client side.
 
+These can override the client target/swap.
+
+```
+hf-target: <target query>
+```
+
+```
+hf-swap: <swap type>
+```
+
 ### Special response status
 
 When a response is given outside of a 200 response a special handler will be
@@ -226,6 +236,10 @@ treated for that response.
 ## Version
 
 ### 0.12.*
+
+- Fixed redirects.
+- Added ability to override `hf-target` and `hf-swap` attributes with header
+  values.
 
 - Make view transitions opt-in
 
