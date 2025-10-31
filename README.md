@@ -8,12 +8,14 @@ with forms. It has a minimal API. It also makes it easy to build Multipage apps
 I have successfully created offline-first applications with this library. I have
 also successfully used it to create an offline-first, SPA, PWA application.
 
-`htmf` is 1.9 kB minified and 1.3 kB minified and zipped.
+`htmf` is 2.1kB minified and 1.4kB minified and zipped.
 
 Tests can be viewed here: <https://jon49.github.io/htmf/>
 
 For an even simpler library that can get you there just the same with less front
-end JS use [HTMZ-BE](https://github.com/jon49/htmz-be).
+end JS use [HTMZ-BE](https://github.com/jon49/htmz-be). The core library is 1kB
+not minified, 739B minified, and 596B minified+gzipped. Even the extensions that
+go with this library are smaller than the extensions to HTMF!
 
 ## Overview
 
