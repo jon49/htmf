@@ -12,6 +12,9 @@ also successfully used it to create an offline-first, SPA, PWA application.
 
 Tests can be viewed here: <https://jon49.github.io/htmf/>
 
+For an even simpler library that can get you there just the same with less front
+end JS use [HTMZ-BE](https://github.com/jon49/htmz-be).
+
 ## Overview
 
 This JavaScript code provides functionality for handling HTML form submissions
